@@ -316,11 +316,12 @@ int main(int argc, char *argv[]) {
   glBindVertexArray(0);
 
   // glavna petlja programa
-  while (glfwWindowShouldClose(window) == false) {
+  while (!glfwWindowShouldClose(window)) {
     glClear(GL_COLOR_BUFFER_BIT);
 
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
       glfwSetWindowShouldClose(window, true);
+    }
 
     /********************************************************/
     // primjer 1
@@ -388,8 +389,8 @@ int main(int argc, char *argv[]) {
     //	glBindVertexArray(0);
     //
     //
-    //	glfwSwapBuffers(window);
-    //	glfwPollEvents();
+    glfwSwapBuffers(window);
+    glfwPollEvents();
   }
 
   for (int i = 0; i < 4; i++) delete sjencar[i];

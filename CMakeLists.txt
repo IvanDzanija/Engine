@@ -4,7 +4,8 @@ project(Engine)
 
 function(irg_add_app target_name)
     set(project_dir "${CMAKE_CURRENT_SOURCE_DIR}")
-    set(dependencies_dir "${project_dir}/../dependencies")
+    set(root_dir "${CMAKE_SOURCE_DIR}")
+    set(dependencies_dir "${root_dir}/dependencies")
 
     file(GLOB dependency_sources CONFIGURE_DEPENDS
         "${dependencies_dir}/glad/src/glad.c"
@@ -137,7 +138,7 @@ endfunction()
 option(GLFW_BUILD_DOCS OFF)
 option(GLFW_BUILD_EXAMPLES OFF)
 option(GLFW_BUILD_TESTS OFF)
-add_subdirectory(src/dependencies/glfw)
+add_subdirectory(dependencies/glfw)
 
 option(ASSIMP_BUILD_ASSIMP_TOOLS OFF)
 option(ASSIMP_BUILD_SAMPLES OFF)
@@ -147,15 +148,15 @@ option(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT OFF)
 set(ASSIMP_WARNINGS_AS_ERRORS OFF CACHE BOOL "Treat assimp warnings as errors" FORCE)
 set(ASSIMP_BUILD_OBJ_EXPORTER TRUE)
 set(ASSIMP_BUILD_OBJ_IMPORTER TRUE)
-add_subdirectory(src/dependencies/assimp)
+add_subdirectory(dependencies/assimp)
 
 if(MSVC AND TARGET assimp)
     target_compile_options(assimp PRIVATE /WX-)
 endif()
 
-add_subdirectory(src/primjerGLM)
-add_subdirectory(src/primjerASSIMP)
 add_subdirectory(src/primjerOpenGL)
+add_subdirectory(src/primjerASSIMP)
+add_subdirectory(examples)
 
 add_subdirectory(src/vjezba1)
 add_subdirectory(src/vjezba2)

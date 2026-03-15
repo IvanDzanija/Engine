@@ -1,0 +1,22 @@
+CompileFlags:
+    # Path to CMake's compile_commands.json
+    CompilationDatabase: build
+    # Extra flags to inject
+    Add:
+        - -std=c++20
+        - -Wall
+        - -Wextra
+        - -Wpedantic
+    Remove:
+        - -Werror
+Index:
+    Background: Skip
+Diagnostics:
+    ClangTidy:
+        Add:
+            - modernize-*
+            - performance-*
+            - readability-*
+        Remove:
+            - modernize-use-trailing-return-type
+            - performance-avoid-endl

@@ -1,4 +1,5 @@
 #pragma once
+#include <bitset>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -9,6 +10,10 @@
 
 static constexpr int32 SWIDTH = 97;
 static constexpr int32 SHEIGHT = 97;
+static int32 cropped_x0 = SWIDTH / 3;
+static int32 cropped_y0 = SHEIGHT / 3;
+static int32 cropped_x1 = 2 * SWIDTH / 3;
+static int32 cropped_y1 = 2 * SHEIGHT / 3;
 static bool crop = false;
 static std::vector<std::pair<int, int>> mouse_clicks;
 
@@ -17,6 +22,8 @@ void bresenham_line_1(eng::Graphics &screen, int32 x0, int32 y0, int32 x1, int32
                       const glm::vec3 &color);
 void bresenham_line_2(eng::Graphics &screen, int32 x0, int32 y0, int32 x1, int32 y1,
                       const glm::vec3 &color);
+void draw_cropped_lines(eng::Graphics &screen);
+void draw_full_lines(eng::Graphics &screen);
 }  // namespace detail
 
 void mouse_click(int32 x, int32 y, int32 button) {
@@ -72,35 +79,23 @@ inline void draw_line(eng::Graphics &screen, int x0, int y0, int x1, int y1) {
 }
 
 inline void draw_mouse_clicks(eng::Graphics &screen) {
-  for (int32 cnt = 0; cnt < static_cast<int32>(mouse_clicks.size()); ++cnt) {
-    // if (crop) {
-    //   int x = mouse_clicks[cnt].first;
-    //   int y = HEIGHT - mouse_clicks[cnt].second - 1;
-    //   if (x < WIDTH / 2 && y < HEIGHT / 2) {
-    //     screen.shade_fragment(x, y, glm::vec3(0.6, 0.2, 0));
-    //   }
-    // }
-    auto click = mouse_clicks[cnt];
-    screen.shade_fragment(click.first, screen.get_height() - click.second - 1,
-                          glm::vec3(0.6, 0.2, 0));
-    if ((cnt & 1) == 1) {
-      draw_line(screen, mouse_clicks[cnt - 1].first,
-                screen.get_height() - mouse_clicks[cnt - 1].second - 1, click.first,
-                screen.get_height() - click.second - 1);
-    }
+  if (crop) {
+    detail::draw_cropped_lines(screen);
+  } else {
+    detail::draw_full_lines(screen);
   }
 }
 
 inline void draw_boundary(eng::Graphics &screen) {
-  int32 x0 = screen.get_width() / 3;
-  int32 y0 = screen.get_height() / 3;
-  int32 x1 = 2 * screen.get_width() / 3;
-  int32 y1 = 2 * screen.get_height() / 3;
+  cropped_x0 = screen.get_width() / 3;
+  cropped_y0 = screen.get_height() / 3;
+  cropped_x1 = 2 * screen.get_width() / 3;
+  cropped_y1 = 2 * screen.get_height() / 3;
 
-  draw_line(screen, x0, y0, x1, y0);
-  draw_line(screen, x0, y0, x0, y1);
-  draw_line(screen, x1, y0, x1, y1);
-  draw_line(screen, x0, y1, x1, y1);
+  draw_line(screen, cropped_x0, cropped_y0, cropped_x1, cropped_y0);
+  draw_line(screen, cropped_x0, cropped_y0, cropped_x0, cropped_y1);
+  draw_line(screen, cropped_x1, cropped_y0, cropped_x1, cropped_y1);
+  draw_line(screen, cropped_x0, cropped_y1, cropped_x1, cropped_y1);
 }
 
 int main(int argc, char *argv[]) {
@@ -124,10 +119,12 @@ int main(int argc, char *argv[]) {
       }
     }
 
-    draw_mouse_clicks(screen);
+    // Drawing boundary has to go first
+    // It has a side effect on the width and height variables
     if (crop) {
       draw_boundary(screen);
     }
+    draw_mouse_clicks(screen);
 
     screen.draw_raster();
 
@@ -211,4 +208,79 @@ void bresenham_line_2(eng::Graphics &screen, int32 x0, int32 y0, int32 x1, int32
     }
   }
 }
+
+void draw_cropped_lines(eng::Graphics &screen) {
+  // Cohen Sutherland algorithm
+  for (int32 cnt = 0; cnt < static_cast<int32>(mouse_clicks.size()); ++cnt) {
+    if ((cnt & 1) == 1) {
+      std::pair<int32, int32> p0 = mouse_clicks[cnt - 1];  // Left point
+      std::pair<int32, int32> p1 = mouse_clicks[cnt];      // Right point
+
+      std::bitset<4> code0;
+      std::bitset<4> code1;
+      code0[0] = p0.second > cropped_y1;  // Above
+      code0[1] = p0.second < cropped_y0;  // Below
+      code0[2] = p0.first > cropped_x1;   // Right
+      code0[3] = p0.first < cropped_x0;   // Left
+      code1[0] = p1.second > cropped_y1;  // Above
+      code1[1] = p1.second < cropped_y0;  // Below
+      code1[2] = p1.first > cropped_x1;   // Right
+      code1[3] = p1.first < cropped_x0;   // Left
+      std::bitset<4> result = code0 & code1;
+      if (result.any()) {
+        continue;
+      }
+
+      int32 dx = p1.first - p0.first;
+      int32 dy = p1.second - p0.second;
+      double a = static_cast<double>(dy) / static_cast<double>(dx);
+      double b = static_cast<double>(p0.second) - (a * static_cast<double>(p0.first));
+      while (code0.any()) {
+        if (code0[0]) {
+          // y = y1_cropped, x = (y1_cropped - b) / a
+          p0.first = static_cast<int32>((cropped_y1 - b) / a);
+          p0.second = cropped_y1;
+          code0[0] = false;
+        } else if (code0[1]) {
+          p0.first = static_cast<int32>((cropped_y0 - b) / a);
+          p0.second = cropped_y0;
+        } else if (code0[2]) {
+          p0.second = static_cast<int32>(a * cropped_x1 + b);
+          p0.first = cropped_x1;
+        } else if (code0[3]) {
+          p0.second = static_cast<int32>(a * cropped_x0 + b);
+          p0.first = cropped_x0;
+        }
+      }
+      while (code1.any()) {
+        if (code1[0]) {
+          p1.first = static_cast<int32>((cropped_y1 - b) / a);
+          p1.second = cropped_y1;
+        } else if (code1[1]) {
+          p1.first = static_cast<int32>((cropped_y0 - b) / a);
+          p1.second = cropped_y0;
+        } else if (code1[2]) {
+          p1.second = static_cast<int32>(a * cropped_x1 + b);
+          p1.first = cropped_x1;
+        } else if (code1[3]) {
+          p1.second = static_cast<int32>(a * cropped_x0 + b);
+          p1.first = cropped_x0;
+        }
+      }
+      draw_line(screen, p0.first, p0.second, p1.first, p1.second);
+    }
+  }
+}
+
+void draw_full_lines(eng::Graphics &screen) {
+  for (int32 cnt = 0; cnt < static_cast<int32>(mouse_clicks.size()); ++cnt) {
+    if ((cnt & 1) == 1) {
+      draw_line(screen, mouse_clicks[cnt - 1].first,
+                screen.get_height() - mouse_clicks[cnt - 1].second - 1,
+                mouse_clicks[cnt].first,
+                screen.get_height() - mouse_clicks[cnt].second - 1);
+    }
+  }
+}
+
 }  // namespace detail

@@ -20,3 +20,4 @@ Diagnostics:
         Remove:
             - modernize-use-trailing-return-type
             - performance-avoid-endl
+            - readability-magic-numbers

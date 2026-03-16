@@ -131,6 +131,20 @@ Shader::Shader(const char *vertexPath, const char *geometryPath,
   glDeleteShader(fragment);
 }
 
+Shader::Shader(Shader &&other) noexcept : ID(other.ID) { other.ID = 0; }
+
+Shader &Shader::operator=(Shader &&other) noexcept {
+  if (this != &other) {
+    if (ID != 0) {
+      glDeleteProgram(ID);
+    }
+
+    ID = other.ID;
+    other.ID = 0;
+  }
+  return *this;
+}
+
 Shader::~Shader() { glDeleteProgram(ID); }
 
 // ----------------------------------

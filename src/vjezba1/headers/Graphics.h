@@ -9,7 +9,8 @@
 #include <string>
 #include <vector>
 
-#include "Global.hpp"
+#include "Global.h"
+#include "Raster.h"
 #include "Shader.h"
 
 namespace eng {
@@ -23,21 +24,30 @@ class Graphics {
   // ----------------------------------
   // CONSTRUCTORS
   // ----------------------------------
-  explicit Graphics(int width, int height, glm::vec3 clearColor, char *path);
+  explicit Graphics(int width, int height, glm::vec3 clear_color, char *path);
   ~Graphics();
 
-  int32 light_fragment(int32 x, int32 y, glm::vec3 color);
-  int osvijetliFragment(int32 x, int32 y, glm::vec3 color);
-  int osvijetliFragment(int32 x, int32 y);
+  // ----------------------------------
+  // GETTERS & SETTERS
+  // ----------------------------------
+  [[nodiscard]] int32 get_width() const noexcept { return _width; }
+  [[nodiscard]] int32 get_height() const noexcept { return _height; }
+  [[nodiscard]] std::pair<int32, int32> get_framebuffer_size() const noexcept {
+    return {_width, _height};
+  }
+  void resize_framebuffer(int width, int height);
+  int32 shade_fragment(int32 x, int32 y, glm::vec3 color = glm::vec3(1.0F));
 
-  void pobrisiProzor();
-
-  // pozovi funkcije u OpenGL-u koje iscrtaju raster
-  void iscrtajRaster();
-
-  static bool trebaZatvoriti();
-
-  static int registrirajFunkcijuZaKlikMisa(void (*mouse_callback_user)(int, int, int));
+  // ----------------------------------
+  // OPENGL ABSTRACTION
+  // ----------------------------------
+  void clear_window();
+  void draw_raster();  // pozovi funkcije u OpenGL-u koje iscrtaju raster
+  void apply_clear_color() const;
+  static bool should_close();
+  static int register_mouse_click_method(void (*mouse_callback_user)(int, int, int));
+  static int register_framebuffer_resize_method(
+      void (*framebuffer_resize_callback_user)(GLFWwindow *, int, int));
 
  private:
   // ----------------------------------
@@ -52,14 +62,14 @@ class Graphics {
   int32 _width;
   int32 _height;
   glm::vec3 _clear_color;
-  float *_raster;
+  Raster _raster;
+  uint32 _rasterID;
   std::array<float, _RASTER_VERTICES_COUNT> _raster_vertices = {
       //  verticesCoord	textureCoord
       -1, -1, 0, 0, 0, 1, -1, 0, 1, 0, -1, 1, 0, 0, 1, 1, 1, 0, 1, 1};
 
-  static GLFWwindow *window;
+  static GLFWwindow *_window;
 
-  unsigned int _rasterID;
   unsigned int VAO;
   unsigned int VBO;
 
@@ -68,12 +78,17 @@ class Graphics {
   // ----------------------------------
   // METHODS
   // ----------------------------------
-  static void mouse_button_callback(GLFWwindow *window, int button, int action,
-                                    int mods);
-  static void cursor_position_callback(GLFWwindow *window, double xpos, double ypos);
-  static void (*mouse_callback_user)(int, int, int);
+  static void _mouse_button_callback(GLFWwindow *window, int32 button, int32 action,
+                                     int32 mods);
+  static void _cursor_position_callback(GLFWwindow *window, double xpos, double ypos);
+  static void _framebuffer_size_callback(GLFWwindow *window, int width, int height);
+  static void (*mouse_callback_user)(int32, int32, int32);
+  static void (*framebuffer_resize_callback_user)(GLFWwindow *, int, int);
+  Shader *_load_raster_shader(char *path);
 
-  void load_glfw();
-  Shader *loadRasterShader(char *path);
+  // ----------------------------------
+  // OPENGL SETUP
+  // ----------------------------------
+  void _load_glfw();
 };
 }  // namespace eng

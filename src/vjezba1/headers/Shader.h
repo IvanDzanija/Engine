@@ -6,7 +6,7 @@
 #include <sstream>
 #include <string>
 
-#include "Global.hpp"
+#include "Global.h"
 
 namespace eng {
 class Shader {
@@ -25,6 +25,11 @@ class Shader {
   // ----------------------------------
   Shader(const char *vertexPath, const char *fragmentPath);
   Shader(const char *vertexPath, const char *geometryPath, const char *fragmentPath);
+  Shader(const Shader &) = delete;
+  Shader &operator=(const Shader &) = delete;
+
+  Shader(Shader &&other) noexcept;
+  Shader &operator=(Shader &&other) noexcept;
   ~Shader();
 
   // ----------------------------------

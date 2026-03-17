@@ -8,12 +8,17 @@
 #include "Global.h"
 #include "Graphics.h"
 
+/* Coordinate system is such that (0,0) is in the top left corner */
+
 static constexpr int32 SWIDTH = 97;
 static constexpr int32 SHEIGHT = 97;
+
+/* Note: y-axis is inverted, so we take 2/3 of the height for y0 and 1/3 for y1
+ */
 static int32 cropped_x0 = SWIDTH / 3;
-static int32 cropped_y0 = SHEIGHT / 3;
+static int32 cropped_y0 = 2 * SHEIGHT / 3;
 static int32 cropped_x1 = 2 * SWIDTH / 3;
-static int32 cropped_y1 = 2 * SHEIGHT / 3;
+static int32 cropped_y1 = SHEIGHT / 3;
 static bool crop = false;
 static std::vector<std::pair<int, int>> mouse_clicks;
 
@@ -29,11 +34,11 @@ void draw_full_lines(eng::Graphics &screen);
 void mouse_click(int32 x, int32 y, int32 button) {
   switch (button) {
     case 0:
-      std::cout << "Left, " << std::endl;
+      std::println("Left click at ({}, {})", x, y);
       mouse_clicks.emplace_back(x, y);
       break;
     case 1:
-      std::cout << "Right, " << std::endl;
+      std::println("Right click at ({}, {})", x, y);
       crop = !crop;
       break;
     default:
@@ -51,7 +56,15 @@ void framebuffer_resize(GLFWwindow *window, int width, int height) {
   std::println("Framebuffer resized to {}x{}", w, h);
 }
 
-inline void draw_line(eng::Graphics &screen, int x0, int y0, int x1, int y1) {
+/**
+ * Bresenham's line algorithm implementation.
+ * Note: This implementation assumes that the input coordinates are within the screen
+ * bounds.
+ * Note: Current viewport is defined so the y-axis is inverted, Graphics class takes
+ * care of correctly inverting the y-coordinate when shading the fragment, so we can use
+ * the standard Bresenham's line algorithm without any modifications.
+ */
+inline void draw_line(eng::Graphics &screen, int32 x0, int32 y0, int32 x1, int32 y1) {
   // Color based on
   float red = static_cast<float>(x0) / screen.get_width();
   float green =
@@ -88,9 +101,9 @@ inline void draw_mouse_clicks(eng::Graphics &screen) {
 
 inline void draw_boundary(eng::Graphics &screen) {
   cropped_x0 = screen.get_width() / 3;
-  cropped_y0 = screen.get_height() / 3;
+  cropped_y0 = 2 * screen.get_height() / 3;
   cropped_x1 = 2 * screen.get_width() / 3;
-  cropped_y1 = 2 * screen.get_height() / 3;
+  cropped_y1 = screen.get_height() / 3;
 
   draw_line(screen, cropped_x0, cropped_y0, cropped_x1, cropped_y0);
   draw_line(screen, cropped_x0, cropped_y0, cropped_x0, cropped_y1);
@@ -212,21 +225,37 @@ void bresenham_line_2(eng::Graphics &screen, int32 x0, int32 y0, int32 x1, int32
 void draw_cropped_lines(eng::Graphics &screen) {
   // Cohen Sutherland algorithm
   for (int32 cnt = 0; cnt < static_cast<int32>(mouse_clicks.size()); ++cnt) {
+    auto [x_curr, y_curr] = mouse_clicks[cnt];
+    if (x_curr >= cropped_x0 && x_curr <= cropped_x1 && y_curr >= cropped_y1 &&
+        y_curr <= cropped_y0) {
+      screen.shade_fragment(x_curr, y_curr, glm::vec3(0, 0.8, 0));
+    }
+
     if ((cnt & 1) == 1) {
       std::pair<int32, int32> p0 = mouse_clicks[cnt - 1];  // Left point
       std::pair<int32, int32> p1 = mouse_clicks[cnt];      // Right point
 
+      //      std::println("Original line: ({}, {}) to ({}, {})", p0.first, p0.second,
+      //      p1.first,
+      //                   p1.second);
+      //      std::println("Cropped rectangle: ({}, {}) to ({}, {})", cropped_x0,
+      //      cropped_y0,
+      //                   cropped_x1, cropped_y1);
+
       std::bitset<4> code0;
       std::bitset<4> code1;
-      code0[0] = p0.second > cropped_y1;  // Above
-      code0[1] = p0.second < cropped_y0;  // Below
+      // Note: y-axis is inverted, so above and below are swapped
+      code0[0] = p0.second < cropped_y1;  // Above
+      code0[1] = p0.second > cropped_y0;  // Below
       code0[2] = p0.first > cropped_x1;   // Right
       code0[3] = p0.first < cropped_x0;   // Left
-      code1[0] = p1.second > cropped_y1;  // Above
-      code1[1] = p1.second < cropped_y0;  // Below
+      code1[0] = p1.second < cropped_y1;  // Above
+      code1[1] = p1.second > cropped_y0;  // Below
       code1[2] = p1.first > cropped_x1;   // Right
       code1[3] = p1.first < cropped_x0;   // Left
       std::bitset<4> result = code0 & code1;
+      std::println("Code0: {}, Code1: {}, Result: {}", code0.to_string(),
+                   code1.to_string(), result.to_string());
       if (result.any()) {
         continue;
       }
@@ -236,21 +265,27 @@ void draw_cropped_lines(eng::Graphics &screen) {
       double a = static_cast<double>(dy) / static_cast<double>(dx);
       double b = static_cast<double>(p0.second) - (a * static_cast<double>(p0.first));
       while (code0.any()) {
+        // We can do this branchless with code[x] * cropped + (1 - code[x]) * p0 right?
         if (code0[0]) {
-          // y = y1_cropped, x = (y1_cropped - b) / a
           p0.first = static_cast<int32>((cropped_y1 - b) / a);
           p0.second = cropped_y1;
-          code0[0] = false;
-        } else if (code0[1]) {
+        }
+        if (code0[1]) {
           p0.first = static_cast<int32>((cropped_y0 - b) / a);
           p0.second = cropped_y0;
-        } else if (code0[2]) {
-          p0.second = static_cast<int32>(a * cropped_x1 + b);
+        }
+        if (code0[2]) {
+          p0.second = static_cast<int32>((a * cropped_x1) + b);
           p0.first = cropped_x1;
-        } else if (code0[3]) {
-          p0.second = static_cast<int32>(a * cropped_x0 + b);
+        }
+        if (code0[3]) {
+          p0.second = static_cast<int32>((a * cropped_x0) + b);
           p0.first = cropped_x0;
         }
+        code0[0] = p0.second < cropped_y1;  // Above
+        code0[1] = p0.second > cropped_y0;  // Below
+        code0[2] = p0.first > cropped_x1;   // Right
+        code0[3] = p0.first < cropped_x0;   // Left
       }
       while (code1.any()) {
         if (code1[0]) {
@@ -260,12 +295,16 @@ void draw_cropped_lines(eng::Graphics &screen) {
           p1.first = static_cast<int32>((cropped_y0 - b) / a);
           p1.second = cropped_y0;
         } else if (code1[2]) {
-          p1.second = static_cast<int32>(a * cropped_x1 + b);
+          p1.second = static_cast<int32>((a * cropped_x1) + b);
           p1.first = cropped_x1;
         } else if (code1[3]) {
-          p1.second = static_cast<int32>(a * cropped_x0 + b);
+          p1.second = static_cast<int32>((a * cropped_x0) + b);
           p1.first = cropped_x0;
         }
+        code1[0] = p1.second < cropped_y1;  // Above
+        code1[1] = p1.second > cropped_y0;  // Below
+        code1[2] = p1.first > cropped_x1;   // Right
+        code1[3] = p1.first < cropped_x0;   // Left
       }
       draw_line(screen, p0.first, p0.second, p1.first, p1.second);
     }
@@ -274,11 +313,11 @@ void draw_cropped_lines(eng::Graphics &screen) {
 
 void draw_full_lines(eng::Graphics &screen) {
   for (int32 cnt = 0; cnt < static_cast<int32>(mouse_clicks.size()); ++cnt) {
+    screen.shade_fragment(mouse_clicks[cnt].first, mouse_clicks[cnt].second,
+                          glm::vec3(0, 0.8, 0));
     if ((cnt & 1) == 1) {
-      draw_line(screen, mouse_clicks[cnt - 1].first,
-                screen.get_height() - mouse_clicks[cnt - 1].second - 1,
-                mouse_clicks[cnt].first,
-                screen.get_height() - mouse_clicks[cnt].second - 1);
+      draw_line(screen, mouse_clicks[cnt - 1].first, mouse_clicks[cnt - 1].second,
+                mouse_clicks[cnt].first, mouse_clicks[cnt].second);
     }
   }
 }

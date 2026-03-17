@@ -92,7 +92,12 @@ void Graphics::resize_framebuffer(int32 width, int32 height) {
   glViewport(0, 0, width, height);
 }
 
+/*Viewport coordinates: (0, 0) is top left.
+ * y-axis is inverted and this method handles the inversion internally.
+ */
+
 int32 Graphics::shade_fragment(int32 x, int32 y, glm::vec3 color) {
+  y = _height - 1 - y;  // Invert y-axis
   if (x >= 0 && x < _width && y >= 0 && y < _height) {
     _raster(x, y) = color;
     // _raster[(y * _width * 3) + (x * 3)] = color.x;

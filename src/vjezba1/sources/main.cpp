@@ -221,6 +221,32 @@ void bresenham_line_2(eng::Graphics &screen, int32 x0, int32 y0, int32 x1, int32
     }
   }
 }
+void compute_intersection(std::pair<int32, int32> &point, double slope,
+                          double intercept, std::bitset<4> code) {
+  while (code.any()) {
+    // We can do this branchless with code[x] * cropped + (1 - code[x]) * p0 right?
+    if (code[0]) {
+      point.first = static_cast<int32>((cropped_y1 - intercept) / slope);
+      point.second = cropped_y1;
+    }
+    if (code[1]) {
+      point.first = static_cast<int32>((cropped_y0 - intercept) / slope);
+      point.second = cropped_y0;
+    }
+    if (code[2]) {
+      point.second = static_cast<int32>((slope * cropped_x1) + intercept);
+      point.first = cropped_x1;
+    }
+    if (code[3]) {
+      point.second = static_cast<int32>((slope * cropped_x0) + intercept);
+      point.first = cropped_x0;
+    }
+    code[0] = point.second < cropped_y1;  // Above
+    code[1] = point.second > cropped_y0;  // Below
+    code[2] = point.first > cropped_x1;   // Right
+    code[3] = point.first < cropped_x0;   // Left
+  }
+}
 
 void draw_cropped_lines(eng::Graphics &screen) {
   // Cohen Sutherland algorithm
@@ -264,48 +290,10 @@ void draw_cropped_lines(eng::Graphics &screen) {
       int32 dy = p1.second - p0.second;
       double a = static_cast<double>(dy) / static_cast<double>(dx);
       double b = static_cast<double>(p0.second) - (a * static_cast<double>(p0.first));
-      while (code0.any()) {
-        // We can do this branchless with code[x] * cropped + (1 - code[x]) * p0 right?
-        if (code0[0]) {
-          p0.first = static_cast<int32>((cropped_y1 - b) / a);
-          p0.second = cropped_y1;
-        }
-        if (code0[1]) {
-          p0.first = static_cast<int32>((cropped_y0 - b) / a);
-          p0.second = cropped_y0;
-        }
-        if (code0[2]) {
-          p0.second = static_cast<int32>((a * cropped_x1) + b);
-          p0.first = cropped_x1;
-        }
-        if (code0[3]) {
-          p0.second = static_cast<int32>((a * cropped_x0) + b);
-          p0.first = cropped_x0;
-        }
-        code0[0] = p0.second < cropped_y1;  // Above
-        code0[1] = p0.second > cropped_y0;  // Below
-        code0[2] = p0.first > cropped_x1;   // Right
-        code0[3] = p0.first < cropped_x0;   // Left
-      }
-      while (code1.any()) {
-        if (code1[0]) {
-          p1.first = static_cast<int32>((cropped_y1 - b) / a);
-          p1.second = cropped_y1;
-        } else if (code1[1]) {
-          p1.first = static_cast<int32>((cropped_y0 - b) / a);
-          p1.second = cropped_y0;
-        } else if (code1[2]) {
-          p1.second = static_cast<int32>((a * cropped_x1) + b);
-          p1.first = cropped_x1;
-        } else if (code1[3]) {
-          p1.second = static_cast<int32>((a * cropped_x0) + b);
-          p1.first = cropped_x0;
-        }
-        code1[0] = p1.second < cropped_y1;  // Above
-        code1[1] = p1.second > cropped_y0;  // Below
-        code1[2] = p1.first > cropped_x1;   // Right
-        code1[3] = p1.first < cropped_x0;   // Left
-      }
+
+      compute_intersection(p0, a, b, code0);  // Note: side effect on p0
+      compute_intersection(p1, a, b, code1);  // Note: side effect on p1
+
       draw_line(screen, p0.first, p0.second, p1.first, p1.second);
     }
   }

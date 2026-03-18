@@ -1,2 +1,4 @@
-[Bb]uild*
+[Bb]uild/
+build-release/
+build-debug/
 .DS_Store

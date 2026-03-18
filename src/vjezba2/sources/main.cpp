@@ -1,9 +1,4 @@
 #pragma once
-#include <bitset>
-#include <cstdio>
-#include <cstdlib>
-#include <iostream>
-#include <print>
 
 #include "Global.h"
 #include "Graphics.h"
@@ -25,7 +20,6 @@ struct AppState {
 };
 
 namespace detail {
-void draw_full_lines(eng::Graphics &screen);
 double calculate_angle(const eng::Polygon &polygon) {
   if (polygon.vertex_count() < 3) {
     return 0.0;
@@ -57,13 +51,28 @@ void mouse_click(int32 x, int32 y, int32 button) {
           break;
         default:
           polygons.back().add_vertex(eng::Point2D(x, y));
+          // Angle output
           double angle = detail::calculate_angle(polygons.back());
           std::println("Added vertex at ({}, {}) with angle {:.2f} degrees.", x, y,
                        angle);
+
+          // Convexity check
+          std::optional<bool> convex = polygons.back().test_convex();
           if (polygons.back().is_closed()) {
-            std::println("Polygon closed with {} vertices.",
-                         polygons.back().vertex_count());
+            // std::println("Polygon closed with {} vertices.",
+            //              polygons.back().vertex_count());
+            // if (convex.has_value() && convex.value()) {
+            //   std::println("Polygon is convex.");
+            // } else {
+            //   std::println("Polygon is not convex.");
+            // }
             polygons.emplace_back();
+          } else {
+            if (convex.has_value() && convex.value()) {
+              std::println("Polygon is still convex.");
+            } else {
+              std::println("This point made the polygon non-convex.");
+            }
           }
       }
       break;
@@ -125,12 +134,40 @@ void framebuffer_resize(GLFWwindow *window, int width, int height) {
 }
 
 inline void draw_mouse_clicks(eng::Graphics &screen) {
+  int i = 0;
   switch (mode) {
     case ScreenMode::PICKING:
-      detail::draw_full_lines(screen);
+      // Draw outlines of all closed polygons and vertices of the currently open polygon
+      for (auto &polygon : polygons) {
+        if (polygon.is_closed()) {
+          polygon.draw_outline(screen);
+        } else {
+          for (int32 cnt = 0; cnt < static_cast<int32>(polygon.vertex_count()); ++cnt) {
+            const auto &curr = polygon[cnt];
+            screen.shade_fragment(curr.point.x, curr.point.y, glm::vec3(0.8, 0, 0));
+
+            if (cnt > 0) {
+              const auto &prev = polygon[cnt - 1];
+              eng::draw_line(screen, curr.point.x, curr.point.y, prev.point.x,
+                             prev.point.y);
+            }
+          }
+        }
+      }
+
       break;
     case ScreenMode::DRAWING:
-      // Drawing mode is for filling up the polygons
+      for (auto &polygon : polygons) {
+        ++i;
+        std::optional<bool> convex = polygon.test_convex();
+        if (!convex.has_value() || (convex.has_value() && convex.value())) {
+          std::println("Polygon {} is convex.", i);
+          polygon.draw_filled(screen);
+        } else {
+          std::println("Polygon {} is not convex.", i);
+        }
+        //          polygon.draw_outline(screen);
+      }
       break;
     case ScreenMode::TESTING:
       // Testing mode is for testing if points are inside any of the polygons
@@ -165,20 +202,7 @@ int main(int argc, char *argv[]) {
         }
       }
     }
-    switch (mode) {
-      case ScreenMode::PICKING:
-        draw_mouse_clicks(screen);
-        break;
-      case ScreenMode::DRAWING:
-        for (const auto &polygon : polygons) {
-          polygon.draw_outline(screen);
-        }
-        // Drawing mode is for filling up the polygons
-        break;
-      case ScreenMode::TESTING:
-        // Testing mode is for testing if points are inside any of the polygons
-        break;
-    }
+    draw_mouse_clicks(screen);
 
     screen.draw_raster();
 
@@ -189,20 +213,3 @@ int main(int argc, char *argv[]) {
 
   return EXIT_SUCCESS;
 }
-
-namespace detail {
-void draw_full_lines(eng::Graphics &screen) {
-  for (const auto &polygon : polygons) {
-    for (int32 cnt = 0; cnt < static_cast<int32>(polygon.vertex_count()); ++cnt) {
-      const auto &curr = polygon[cnt];
-      screen.shade_fragment(curr.point.x, curr.point.y, glm::vec3(0.8, 0, 0));
-
-      if (cnt > 0) {
-        const auto &prev = polygon[cnt - 1];
-        eng::draw_line(screen, curr.point.x, curr.point.y, prev.point.x, prev.point.y);
-      }
-    }
-  }
-}
-
-}  // namespace detail

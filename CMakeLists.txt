@@ -2,6 +2,32 @@ cmake_minimum_required(VERSION 3.16)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 project(Engine)
 
+option(ENABLE_SANITIZERS "Enable Address/Undefined sanitizers" OFF)
+
+function(irg_enable_sanitizers target_name)
+    if(NOT ENABLE_SANITIZERS)
+        return()
+    endif()
+
+    if(MSVC)
+        message(WARNING "Sanitizers are not configured for MSVC in this project.")
+        return()
+    endif()
+
+    if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(${target_name} PRIVATE
+            -fsanitize=address,undefined
+            -fno-omit-frame-pointer
+            -g
+        )
+        target_link_options(${target_name} PRIVATE
+            -fsanitize=address,undefined
+        )
+    else()
+        message(WARNING "Sanitizers not supported for compiler: ${CMAKE_CXX_COMPILER_ID}")
+    endif()
+endfunction()
+
 function(irg_add_app target_name)
     set(project_dir "${CMAKE_CURRENT_SOURCE_DIR}")
     set(root_dir "${CMAKE_SOURCE_DIR}")
@@ -61,8 +87,13 @@ function(irg_add_app target_name)
     if(MSVC)
         target_compile_options(${target_name} PRIVATE /W4)
     elseif(APPLE)
-      target_link_libraries(${target_name} PRIVATE "-framework OpenGL" "-framework Cocoa" "-framework IOKit" "-framework CoreVideo")
-      target_compile_options(${target_name} PRIVATE -Wall -Wextra -Wpedantic)
+        target_link_libraries(${target_name} PRIVATE
+            "-framework OpenGL"
+            "-framework Cocoa"
+            "-framework IOKit"
+            "-framework CoreVideo"
+        )
+        target_compile_options(${target_name} PRIVATE -Wall -Wextra -Wpedantic)
     else()
         target_compile_options(${target_name} PRIVATE -Wall -Wextra -Wpedantic)
         if(CMAKE_DL_LIBS)
@@ -71,6 +102,8 @@ function(irg_add_app target_name)
     endif()
 
     target_link_libraries(${target_name} PRIVATE assimp glfw)
+
+    irg_enable_sanitizers(${target_name})
 
     source_group(TREE "${project_dir}/headers" PREFIX "Header Files" FILES ${project_headers})
     source_group(TREE "${project_dir}/sources" PREFIX "Source Files" FILES ${project_sources})

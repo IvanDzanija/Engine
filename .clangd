@@ -1,6 +1,6 @@
 CompileFlags:
     # Path to CMake's compile_commands.json
-    CompilationDatabase: build
+    CompilationDatabase: build-debug
     # Extra flags to inject
     Add:
         - -std=c++20

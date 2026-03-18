@@ -41,6 +41,23 @@ void draw_line(eng::Graphics &screen, int32 x0, int32 y0, int32 x1, int32 y1) {
   }
 }
 
+void color_line(eng::Graphics &screen, int32 x0, int32 y0, int32 x1, int32 y1,
+                const glm::vec3 &color) {
+  if (x0 <= x1) {
+    if (y0 <= y1) {
+      detail::bresenham_line_1(screen, x0, y0, x1, y1, color);
+    } else {
+      detail::bresenham_line_2(screen, x0, y0, x1, y1, color);
+    }
+  } else {
+    if (y0 <= y1) {
+      detail::bresenham_line_2(screen, x1, y1, x0, y0, color);
+    } else {
+      detail::bresenham_line_1(screen, x1, y1, x0, y0, color);
+    }
+  }
+}
+
 namespace detail {
 // 0 to 90 degrees
 inline void bresenham_line_1(eng::Graphics &screen, int32 x0, int32 y0, int32 x1,

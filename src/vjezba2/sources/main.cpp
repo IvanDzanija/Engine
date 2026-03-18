@@ -5,41 +5,112 @@
 #include <iostream>
 #include <print>
 
-#include "Bresenham.h"
 #include "Global.h"
 #include "Graphics.h"
+#include "objects/Polygon.h"
 
 /* Coordinate system is such that (0,0) is in the top left corner */
-
 static constexpr int32 SWIDTH = 97;
 static constexpr int32 SHEIGHT = 97;
+static std::vector<eng::Polygon> polygons(1);
+static std::vector<eng::Point2D> testing_points;
 
-/* Note: y-axis is inverted, so we take 2/3 of the height for y0 and 1/3 for y1
- */
-static int32 cropped_x0 = SWIDTH / 3;
-static int32 cropped_y0 = 2 * SHEIGHT / 3;
-static int32 cropped_x1 = 2 * SWIDTH / 3;
-static int32 cropped_y1 = SHEIGHT / 3;
-static bool crop = false;
-static std::vector<std::pair<int, int>> mouse_clicks;
+enum class ScreenMode : uint8 { PICKING, DRAWING, TESTING };
+static ScreenMode mode = ScreenMode::PICKING;
+
+struct AppState {
+  GLFWcursor *arrow_cursor = nullptr;
+  GLFWcursor *crosshair_cursor = nullptr;
+  bool hovering_close = false;
+};
 
 namespace detail {
-void draw_cropped_lines(eng::Graphics &screen);
 void draw_full_lines(eng::Graphics &screen);
+double calculate_angle(const eng::Polygon &polygon) {
+  if (polygon.vertex_count() < 3) {
+    return 0.0;
+  }
+  const auto &last = polygon[polygon.vertex_count() - 1];
+  const auto &second_last = polygon[polygon.vertex_count() - 2];
+  const auto &third_last = polygon[polygon.vertex_count() - 3];
+  glm::vec2 v2 =
+      glm::vec2(last.point.x - second_last.point.x, last.point.y - second_last.point.y);
+  glm::vec2 v1 = glm::vec2(second_last.point.x - third_last.point.x,
+                           second_last.point.y - third_last.point.y);
+  double dot_product = glm::dot(v1, v2);
+  double norm_v1 = glm::length(v1);
+  double norm_v2 = glm::length(v2);
+  if (norm_v1 == 0 || norm_v2 == 0) {
+    return 0.0;
+  }
+  double cos_alpha = dot_product / (norm_v1 * norm_v2);
+  return glm::degrees(std::acos(cos_alpha));
+}
 }  // namespace detail
 
 void mouse_click(int32 x, int32 y, int32 button) {
   switch (button) {
     case 0:
-      std::println("Left click at ({}, {})", x, y);
-      mouse_clicks.emplace_back(x, y);
+      switch (mode) {
+        case ScreenMode::TESTING:
+          testing_points.emplace_back(x, y);
+          break;
+        default:
+          polygons.back().add_vertex(eng::Point2D(x, y));
+          double angle = detail::calculate_angle(polygons.back());
+          std::println("Added vertex at ({}, {}) with angle {:.2f} degrees.", x, y,
+                       angle);
+          if (polygons.back().is_closed()) {
+            std::println("Polygon closed with {} vertices.",
+                         polygons.back().vertex_count());
+            polygons.emplace_back();
+          }
+      }
       break;
     case 1:
-      std::println("Right click at ({}, {})", x, y);
-      crop = !crop;
+      switch (mode) {
+        case ScreenMode::PICKING:
+          std::println("Switching to DRAWING mode.");
+          mode = ScreenMode::DRAWING;
+          break;
+        case ScreenMode::DRAWING:
+          mode = ScreenMode::TESTING;
+          break;
+        case ScreenMode::TESTING:
+          testing_points.clear();
+          polygons.clear();
+          polygons.emplace_back();
+          mode = ScreenMode::PICKING;
+          break;
+      }
+      // std::println("Right click at ({}, {})", x, y);
       break;
     default:
       std::cout << "Unknown:";
+  }
+}
+
+void cursor_position(GLFWwindow *window, double xpos, double ypos) {
+  auto *screen = static_cast<eng::Graphics *>(glfwGetWindowUserPointer(window));
+  if (screen == nullptr) {
+    return;
+  }
+  auto *app = static_cast<AppState *>(screen->get_user_state());
+
+  eng::Point2D mouse{static_cast<int32>(xpos), static_cast<int32>(ypos)};
+  auto &polygon = polygons.back();
+
+  const bool should_hover_close = polygon.would_close(mouse);
+
+  if (should_hover_close == app->hovering_close) {
+    return;
+  }
+
+  app->hovering_close = should_hover_close;
+  if (should_hover_close) {
+    glfwSetCursor(window, app->crosshair_cursor);
+  } else {
+    glfwSetCursor(window, app->arrow_cursor);
   }
 }
 
@@ -54,30 +125,31 @@ void framebuffer_resize(GLFWwindow *window, int width, int height) {
 }
 
 inline void draw_mouse_clicks(eng::Graphics &screen) {
-  if (crop) {
-    detail::draw_cropped_lines(screen);
-  } else {
-    detail::draw_full_lines(screen);
+  switch (mode) {
+    case ScreenMode::PICKING:
+      detail::draw_full_lines(screen);
+      break;
+    case ScreenMode::DRAWING:
+      // Drawing mode is for filling up the polygons
+      break;
+    case ScreenMode::TESTING:
+      // Testing mode is for testing if points are inside any of the polygons
+      break;
   }
-}
-
-inline void draw_boundary(eng::Graphics &screen) {
-  cropped_x0 = screen.get_width() / 3;
-  cropped_y0 = 2 * screen.get_height() / 3;
-  cropped_x1 = 2 * screen.get_width() / 3;
-  cropped_y1 = screen.get_height() / 3;
-
-  eng::draw_line(screen, cropped_x0, cropped_y0, cropped_x1, cropped_y0);
-  eng::draw_line(screen, cropped_x0, cropped_y0, cropped_x0, cropped_y1);
-  eng::draw_line(screen, cropped_x1, cropped_y0, cropped_x1, cropped_y1);
-  eng::draw_line(screen, cropped_x0, cropped_y1, cropped_x1, cropped_y1);
 }
 
 int main(int argc, char *argv[]) {
   eng::Graphics screen(SWIDTH, SHEIGHT, glm::vec3(0, 0, 0), argv[0]);
 
+  AppState app{};
+  app.arrow_cursor = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+  app.crosshair_cursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
+  // Register callbacks
   eng::Graphics::register_mouse_click_method(mouse_click);
   eng::Graphics::register_framebuffer_resize_method(framebuffer_resize);
+  eng::Graphics::register_cursor_position_method(cursor_position);
+  // Register state of app
+  screen.register_user_state(&app);
 
   while (eng::Graphics::should_close()) {
     screen.clear_window();
@@ -93,13 +165,20 @@ int main(int argc, char *argv[]) {
         }
       }
     }
-
-    // Drawing boundary has to go first
-    // It has a side effect on the width and height variables
-    if (crop) {
-      draw_boundary(screen);
+    switch (mode) {
+      case ScreenMode::PICKING:
+        draw_mouse_clicks(screen);
+        break;
+      case ScreenMode::DRAWING:
+        for (const auto &polygon : polygons) {
+          polygon.draw_outline(screen);
+        }
+        // Drawing mode is for filling up the polygons
+        break;
+      case ScreenMode::TESTING:
+        // Testing mode is for testing if points are inside any of the polygons
+        break;
     }
-    draw_mouse_clicks(screen);
 
     screen.draw_raster();
 
@@ -112,91 +191,16 @@ int main(int argc, char *argv[]) {
 }
 
 namespace detail {
-void compute_intersection(std::pair<int32, int32> &point, double slope,
-                          double intercept, std::bitset<4> code) {
-  while (code.any()) {
-    // We can do this branchless with code[x] * cropped + (1 - code[x]) * p0 right?
-    if (code[0]) {
-      point.first = static_cast<int32>((cropped_y1 - intercept) / slope);
-      point.second = cropped_y1;
-    }
-    if (code[1]) {
-      point.first = static_cast<int32>((cropped_y0 - intercept) / slope);
-      point.second = cropped_y0;
-    }
-    if (code[2]) {
-      point.second = static_cast<int32>((slope * cropped_x1) + intercept);
-      point.first = cropped_x1;
-    }
-    if (code[3]) {
-      point.second = static_cast<int32>((slope * cropped_x0) + intercept);
-      point.first = cropped_x0;
-    }
-    code[0] = point.second < cropped_y1;  // Above
-    code[1] = point.second > cropped_y0;  // Below
-    code[2] = point.first > cropped_x1;   // Right
-    code[3] = point.first < cropped_x0;   // Left
-  }
-}
-
-void draw_cropped_lines(eng::Graphics &screen) {
-  // Cohen Sutherland algorithm
-  for (int32 cnt = 0; cnt < static_cast<int32>(mouse_clicks.size()); ++cnt) {
-    auto [x_curr, y_curr] = mouse_clicks[cnt];
-    if (x_curr >= cropped_x0 && x_curr <= cropped_x1 && y_curr >= cropped_y1 &&
-        y_curr <= cropped_y0) {
-      screen.shade_fragment(x_curr, y_curr, glm::vec3(0, 0.8, 0));
-    }
-
-    if ((cnt & 1) == 1) {
-      std::pair<int32, int32> p0 = mouse_clicks[cnt - 1];  // Left point
-      std::pair<int32, int32> p1 = mouse_clicks[cnt];      // Right point
-
-      //      std::println("Original line: ({}, {}) to ({}, {})", p0.first, p0.second,
-      //      p1.first,
-      //                   p1.second);
-      //      std::println("Cropped rectangle: ({}, {}) to ({}, {})", cropped_x0,
-      //      cropped_y0,
-      //                   cropped_x1, cropped_y1);
-
-      std::bitset<4> code0;
-      std::bitset<4> code1;
-      // Note: y-axis is inverted, so above and below are swapped
-      code0[0] = p0.second < cropped_y1;  // Above
-      code0[1] = p0.second > cropped_y0;  // Below
-      code0[2] = p0.first > cropped_x1;   // Right
-      code0[3] = p0.first < cropped_x0;   // Left
-      code1[0] = p1.second < cropped_y1;  // Above
-      code1[1] = p1.second > cropped_y0;  // Below
-      code1[2] = p1.first > cropped_x1;   // Right
-      code1[3] = p1.first < cropped_x0;   // Left
-      std::bitset<4> result = code0 & code1;
-      std::println("Code0: {}, Code1: {}, Result: {}", code0.to_string(),
-                   code1.to_string(), result.to_string());
-      if (result.any()) {
-        continue;
-      }
-
-      int32 dx = p1.first - p0.first;
-      int32 dy = p1.second - p0.second;
-      double a = static_cast<double>(dy) / static_cast<double>(dx);
-      double b = static_cast<double>(p0.second) - (a * static_cast<double>(p0.first));
-
-      compute_intersection(p0, a, b, code0);  // Note: side effect on p0
-      compute_intersection(p1, a, b, code1);  // Note: side effect on p1
-
-      eng::draw_line(screen, p0.first, p0.second, p1.first, p1.second);
-    }
-  }
-}
-
 void draw_full_lines(eng::Graphics &screen) {
-  for (int32 cnt = 0; cnt < static_cast<int32>(mouse_clicks.size()); ++cnt) {
-    screen.shade_fragment(mouse_clicks[cnt].first, mouse_clicks[cnt].second,
-                          glm::vec3(0, 0.8, 0));
-    if ((cnt & 1) == 1) {
-      eng::draw_line(screen, mouse_clicks[cnt - 1].first, mouse_clicks[cnt - 1].second,
-                     mouse_clicks[cnt].first, mouse_clicks[cnt].second);
+  for (const auto &polygon : polygons) {
+    for (int32 cnt = 0; cnt < static_cast<int32>(polygon.vertex_count()); ++cnt) {
+      const auto &curr = polygon[cnt];
+      screen.shade_fragment(curr.point.x, curr.point.y, glm::vec3(0.8, 0, 0));
+
+      if (cnt > 0) {
+        const auto &prev = polygon[cnt - 1];
+        eng::draw_line(screen, curr.point.x, curr.point.y, prev.point.x, prev.point.y);
+      }
     }
   }
 }

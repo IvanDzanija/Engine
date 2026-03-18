@@ -7,9 +7,11 @@
 #include <print>
 #include <string>
 
-void (*eng::Graphics::mouse_callback_user)(int, int, int) = nullptr;
-void (*eng::Graphics::framebuffer_resize_callback_user)(GLFWwindow *, int,
-                                                        int) = nullptr;
+void (*eng::Graphics::_mouse_callback_user)(int32, int32, int32) = nullptr;
+void (*eng::Graphics::_framebuffer_resize_callback_user)(GLFWwindow *, int32,
+                                                         int32) = nullptr;
+void (*eng::Graphics::_cursor_position_callback_user)(GLFWwindow *, double,
+                                                      double) = nullptr;
 glm::vec2 eng::Graphics::cursor_position(0, 0);
 GLFWwindow *eng::Graphics::_window = nullptr;
 
@@ -143,16 +145,25 @@ void Graphics::apply_clear_color() const {
   glClearColor(_clear_color.x, _clear_color.y, _clear_color.z, 1.0F);
 }
 
-int Graphics::register_mouse_click_method(void (*Mouse_callback_user)(int, int, int)) {
+int32 Graphics::register_mouse_click_method(void (*mouse_callback_user)(int, int,
+                                                                        int)) {
   glfwSetCursorPosCallback(_window, _cursor_position_callback);
   glfwSetMouseButtonCallback(_window, _mouse_button_callback);
-  mouse_callback_user = Mouse_callback_user;
+  _mouse_callback_user = mouse_callback_user;
   return 0;
 }
 
-int Graphics::register_framebuffer_resize_method(
+int32 Graphics::register_cursor_position_method(
+    void (*cursor_position_callback_user)(GLFWwindow *, double, double)) {
+  glfwSetCursorPosCallback(_window, _cursor_position_callback);
+  _cursor_position_callback_user = cursor_position_callback_user;
+  return 0;
+}
+
+int32 Graphics::register_framebuffer_resize_method(
     void (*Framebuffer_resize_callback_user)(GLFWwindow *, int, int)) {
   glfwSetFramebufferSizeCallback(_window, _framebuffer_size_callback);
+  _framebuffer_resize_callback_user = Framebuffer_resize_callback_user;
   return 0;
 }
 
@@ -162,15 +173,18 @@ int Graphics::register_framebuffer_resize_method(
 void Graphics::_mouse_button_callback(GLFWwindow *window, int32 button, int32 action,
                                       int32 mods) {
   if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-    (*mouse_callback_user)(cursor_position.x / 10, cursor_position.y / 10, 0);
+    (*_mouse_callback_user)(cursor_position.x / 10, cursor_position.y / 10, 0);
   }
   if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
-    (*mouse_callback_user)(cursor_position.x / 10, cursor_position.y / 10, 1);
+    (*_mouse_callback_user)(cursor_position.x / 10, cursor_position.y / 10, 1);
   }
 }
 
 void Graphics::_cursor_position_callback(GLFWwindow *window, double xpos, double ypos) {
   cursor_position = glm::vec2(xpos, ypos);
+  if (_cursor_position_callback_user != nullptr) {
+    (*_cursor_position_callback_user)(window, xpos / 10, ypos / 10);
+  }
 }
 
 void Graphics::_framebuffer_size_callback(GLFWwindow *window, int32 width,

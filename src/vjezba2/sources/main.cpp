@@ -103,7 +103,7 @@ void framebuffer_resize(GLFWwindow *window, int width, int height) {
   std::println("Framebuffer resizing to {}x{}", width, height);
   auto *screen = static_cast<eng::Graphics *>(glfwGetWindowUserPointer(window));
   if (screen != nullptr) {
-    screen->resize_framebuffer(width, height);
+    screen->set_framebuffer_size(width, height);
   }
   auto [w, h] = screen->get_framebuffer_size();
   std::println("Framebuffer resized to {}x{}", w, h);
@@ -149,7 +149,7 @@ inline void draw_mouse_clicks(eng::Graphics &screen) {
         bool inside_any = false;
         for (auto &polygon : polygons) {
           if (polygon.is_closed()) {
-            if (polygon.test_point(point, screen)) {
+            if (polygon.test_point(point)) {
               inside_any = true;
             }
           }

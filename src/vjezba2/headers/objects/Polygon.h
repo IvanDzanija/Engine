@@ -58,8 +58,8 @@ class Polygon {
       last.left = last_left;
     }
     _elements.emplace_back(point, Edge2D(), false);
-    std::println("Last vertex: {}, {}, {}", _elements.back().edge.a,
-                 _elements.back().edge.b, _elements.back().edge.c);
+    //  std::println("Last vertex: {}, {}, {}", _elements.back().edge.a,
+    //               _elements.back().edge.b, _elements.back().edge.c);
   }
 
   // ----------------------------------
@@ -227,7 +227,7 @@ class Polygon {
     return (negative == 0 || positive == 0);
   }
 
-  [[nodiscard]] bool test_point(const Point2D &point, eng::Graphics &screen) {
+  [[nodiscard]] bool test_point(const Point2D &point) {
     if (!is_closed()) {
       throw std::runtime_error("Cannot test point containment on an open polygon.");
     }
@@ -253,8 +253,6 @@ class Polygon {
 
         if (x_intersect > point.x) {
           inside = !inside;
-          eng::color_line(screen, curr_point.x, curr_point.y, end_point.x, end_point.y,
-                          glm::vec3(0, 0.0, 1));
         }
       }
     }

@@ -12,7 +12,7 @@ void (*eng::Graphics::_framebuffer_resize_callback_user)(GLFWwindow *, int32,
                                                          int32) = nullptr;
 void (*eng::Graphics::_cursor_position_callback_user)(GLFWwindow *, double,
                                                       double) = nullptr;
-glm::vec2 eng::Graphics::cursor_position(0, 0);
+glm::vec2 eng::Graphics::_cursor_position(0, 0);
 GLFWwindow *eng::Graphics::_window = nullptr;
 
 namespace eng {
@@ -87,17 +87,50 @@ Graphics::~Graphics() {
   glfwTerminate();
 }
 
-void Graphics::resize_framebuffer(int32 width, int32 height) {
+// ----------------------------------
+// GETTERS & SETTERS
+// ----------------------------------
+// Width
+[[nodiscard]] int32 Graphics::get_width() const noexcept { return _width; }
+void Graphics::set_width(int32 width) noexcept { _width = width; }
+// Height
+[[nodiscard]] int32 Graphics::get_height() const noexcept { return _height; }
+void Graphics::set_height(int32 height) noexcept { _height = height; }
+// Framebuffer size
+[[nodiscard]] std::pair<int32, int32> Graphics::get_framebuffer_size() const noexcept {
+  return {_width, _height};
+}
+void Graphics::set_framebuffer_size(int32 width, int32 height) noexcept {
   _width = width;
   _height = height;
   _raster.resize(width, height);
   glViewport(0, 0, width, height);
 }
+// Cursor position
+[[nodiscard]] glm::vec2 Graphics::get_cursor_position() noexcept {
+  return _cursor_position;
+}
+void Graphics::set_cursor_position(const glm::vec2 &cursor_position) noexcept {
+  _cursor_position = cursor_position;
+}
+// Clear color
+[[nodiscard]] glm::vec3 Graphics::get_clear_color() const noexcept {
+  return _clear_color;
+}
+void Graphics::set_clear_color(const glm::vec3 &clear_color) noexcept {
+  _clear_color = clear_color;
+  // apply_clear_color();
+}
+// Raster
+[[nodiscard]] Raster &Graphics::get_raster() noexcept { return _raster; }
+[[nodiscard]] const Raster &Graphics::get_raster() const noexcept { return _raster; }
 
-/*Viewport coordinates: (0, 0) is top left.
+// ----------------------------------
+// METHODS
+// ----------------------------------
+/* Viewport coordinates: (0, 0) is top left.
  * y-axis is inverted and this method handles the inversion internally.
  */
-
 int32 Graphics::shade_fragment(int32 x, int32 y, glm::vec3 color) {
   y = _height - 1 - y;  // Invert y-axis
   if (x >= 0 && x < _width && y >= 0 && y < _height) {
@@ -173,15 +206,15 @@ int32 Graphics::register_framebuffer_resize_method(
 void Graphics::_mouse_button_callback(GLFWwindow *window, int32 button, int32 action,
                                       int32 mods) {
   if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-    (*_mouse_callback_user)(cursor_position.x / 10, cursor_position.y / 10, 0);
+    (*_mouse_callback_user)(_cursor_position.x / 10, _cursor_position.y / 10, 0);
   }
   if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
-    (*_mouse_callback_user)(cursor_position.x / 10, cursor_position.y / 10, 1);
+    (*_mouse_callback_user)(_cursor_position.x / 10, _cursor_position.y / 10, 1);
   }
 }
 
 void Graphics::_cursor_position_callback(GLFWwindow *window, double xpos, double ypos) {
-  cursor_position = glm::vec2(xpos, ypos);
+  _cursor_position = glm::vec2(xpos, ypos);
   if (_cursor_position_callback_user != nullptr) {
     (*_cursor_position_callback_user)(window, xpos / 10, ypos / 10);
   }

@@ -19,29 +19,6 @@ struct AppState {
   bool hovering_close = false;
 };
 
-namespace detail {
-double calculate_angle(const eng::Polygon &polygon) {
-  if (polygon.vertex_count() < 3) {
-    return 0.0;
-  }
-  const auto &last = polygon[polygon.vertex_count() - 1];
-  const auto &second_last = polygon[polygon.vertex_count() - 2];
-  const auto &third_last = polygon[polygon.vertex_count() - 3];
-  glm::vec2 v2 =
-      glm::vec2(last.point.x - second_last.point.x, last.point.y - second_last.point.y);
-  glm::vec2 v1 = glm::vec2(second_last.point.x - third_last.point.x,
-                           second_last.point.y - third_last.point.y);
-  double dot_product = glm::dot(v1, v2);
-  double norm_v1 = glm::length(v1);
-  double norm_v2 = glm::length(v2);
-  if (norm_v1 == 0 || norm_v2 == 0) {
-    return 0.0;
-  }
-  double cos_alpha = dot_product / (norm_v1 * norm_v2);
-  return glm::degrees(std::acos(cos_alpha));
-}
-}  // namespace detail
-
 void mouse_click(int32 x, int32 y, int32 button) {
   switch (button) {
     case 0:
@@ -52,7 +29,7 @@ void mouse_click(int32 x, int32 y, int32 button) {
         default:
           polygons.back().add_vertex(eng::Point2D(x, y));
           // Angle output
-          double angle = detail::calculate_angle(polygons.back());
+          double angle = polygons.back().calculate_angle();
           std::println("Added vertex at ({}, {}) with angle {:.2f} degrees.", x, y,
                        angle);
 
@@ -68,9 +45,7 @@ void mouse_click(int32 x, int32 y, int32 button) {
             // }
             polygons.emplace_back();
           } else {
-            if (convex.has_value() && convex.value()) {
-              std::println("Polygon is still convex.");
-            } else {
+            if (convex.has_value() && !convex.value()) {
               std::println("This point made the polygon non-convex.");
             }
           }
@@ -84,6 +59,7 @@ void mouse_click(int32 x, int32 y, int32 button) {
           break;
         case ScreenMode::DRAWING:
           mode = ScreenMode::TESTING;
+          std::println("Switching to TESTING mode.");
           break;
         case ScreenMode::TESTING:
           testing_points.clear();
@@ -133,8 +109,16 @@ void framebuffer_resize(GLFWwindow *window, int width, int height) {
   std::println("Framebuffer resized to {}x{}", w, h);
 }
 
+void draw_polygons(eng::Graphics &screen) {
+  for (auto &polygon : polygons) {
+    std::optional<bool> convex = polygon.test_convex();
+    if (!convex.has_value() || (convex.has_value() && convex.value())) {
+      polygon.draw_filled(screen);
+    }
+  }
+}
+
 inline void draw_mouse_clicks(eng::Graphics &screen) {
-  int i = 0;
   switch (mode) {
     case ScreenMode::PICKING:
       // Draw outlines of all closed polygons and vertices of the currently open polygon
@@ -157,20 +141,25 @@ inline void draw_mouse_clicks(eng::Graphics &screen) {
 
       break;
     case ScreenMode::DRAWING:
-      for (auto &polygon : polygons) {
-        ++i;
-        std::optional<bool> convex = polygon.test_convex();
-        if (!convex.has_value() || (convex.has_value() && convex.value())) {
-          std::println("Polygon {} is convex.", i);
-          polygon.draw_filled(screen);
-        } else {
-          std::println("Polygon {} is not convex.", i);
-        }
-        //          polygon.draw_outline(screen);
-      }
+      draw_polygons(screen);
       break;
     case ScreenMode::TESTING:
-      // Testing mode is for testing if points are inside any of the polygons
+      draw_polygons(screen);
+      for (const auto &point : testing_points) {
+        bool inside_any = false;
+        for (auto &polygon : polygons) {
+          if (polygon.is_closed()) {
+            if (polygon.test_point(point, screen)) {
+              inside_any = true;
+            }
+          }
+        }
+        if (inside_any) {
+          screen.shade_fragment(point.x, point.y, glm::vec3(0, 0.8, 0));
+        } else {
+          screen.shade_fragment(point.x, point.y, glm::vec3(0.8, 0, 0));
+        }
+      }
       break;
   }
 }

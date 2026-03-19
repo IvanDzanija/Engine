@@ -5,6 +5,8 @@
 #include "Global.h"
 #include "Graphics.h"
 #include "Point.h"
+#include "Util.h"
+#include "glm/ext/vector_float3.hpp"
 
 namespace eng {
 /**
@@ -71,15 +73,17 @@ class Polygon {
     for (size_t i = 0; i < _elements.size(); ++i) {
       const auto &curr = _elements[i];
       const auto &next = _elements[(i + 1) % _elements.size()];
-      eng::draw_line(screen, curr.point.x, curr.point.y, next.point.x, next.point.y);
+      eng::color_line(screen, curr.point.x, curr.point.y, next.point.x, next.point.y,
+                      glm::vec3(0, 0, 1));
     }
   }
 
   void draw_filled(eng::Graphics &screen) {
     if (_elements.empty()) {
-      std::cerr << "Polygon has no vertices to draw." << std::endl;
+      // std::cerr << "Polygon has no vertices to draw." << std::endl;
       return;  // No vertices to draw
     }
+
     int32 x_min = _elements[0].point.x;
     int32 x_max = _elements[0].point.x;
     int32 y_min = _elements[0].point.y;
@@ -97,10 +101,10 @@ class Polygon {
     for (int32 y = y_min; y <= y_max; ++y) {
       L = static_cast<double>(x_max);
       R = static_cast<double>(x_min);
-      const auto &prev = _elements.back();
       for (const auto &curr : _elements) {
-        std::cout << curr.point.x << " " << curr.point.y << " " << curr.edge.a << " "
-                  << curr.edge.b << " " << curr.edge.c << std::endl;
+        //        std::cout << curr.point.x << " " << curr.point.y << " " << curr.edge.a
+        //        << " "
+        //                  << curr.edge.b << " " << curr.edge.c << std::endl;
         if (curr.edge.a == 0) {
           continue;  // Skip horizontal edges
         }
@@ -119,11 +123,13 @@ class Polygon {
           }
         }
       }
-      eng::draw_line(screen, static_cast<int32>(L), y, static_cast<int32>(R), y);
+      eng::draw_line(screen, static_cast<int32>(L + 0.5F), y,
+                     static_cast<int32>(std::round(R + 0.5F)), y);
     }
-    // Draw startic vertex in red for clarity
+    // Draw starting vertex in red and outline in blue for clarity
     screen.shade_fragment(_elements[0].point.x, _elements[0].point.y,
                           glm::vec3(1, 0, 0));
+    draw_outline(screen);
   }
 
   // ----------------------------------
@@ -211,7 +217,6 @@ class Polygon {
       const auto &next_point = _elements[(i + 1) % _elements.size()].point;
       double dot =
           (curr_edge.a * next_point.x) + (curr_edge.b * next_point.y) + curr_edge.c;
-      std::cout << dot << std::endl;
       if (dot < 0) {
         ++negative;
       }
@@ -221,7 +226,62 @@ class Polygon {
     }
     return (negative == 0 || positive == 0);
   }
-  [[nodiscard]] bool test_point(const Point2D &point) const { return false; }
+
+  [[nodiscard]] bool test_point(const Point2D &point, eng::Graphics &screen) {
+    if (!is_closed()) {
+      throw std::runtime_error("Cannot test point containment on an open polygon.");
+    }
+    bool inside = false;
+    // We use raycasting algorithm and choose y = point.y as the ray.
+    for (size_t i = 0; i < _elements.size(); ++i) {
+      const auto &curr = _elements[i];
+      const auto &next = _elements[(i + 1) % _elements.size()];
+
+      const auto &curr_point = curr.point;
+      const auto &end_point = next.point;
+      const auto &edge = curr.edge;
+
+      // We say that the point does not belong inside the polygon if its on the edge
+      if (eng::point_on_segment(point, curr_point, end_point)) {
+        return false;
+      }
+      // We choose to shoot the ray to the right of the point at y = point.y
+      if ((curr_point.y > point.y) != (end_point.y > point.y)) {
+        // a * x = - b * y - c
+        double x_intersect =
+            (-(edge.b * point.y) - edge.c) / static_cast<double>(edge.a);
+
+        if (x_intersect > point.x) {
+          inside = !inside;
+          eng::color_line(screen, curr_point.x, curr_point.y, end_point.x, end_point.y,
+                          glm::vec3(0, 0.0, 1));
+        }
+      }
+    }
+    return inside;
+  }
+
+  [[nodiscard]] double calculate_angle() {
+    if (_elements.size() < 3) {
+      return 0.0;
+    }
+    const auto &last = _elements[_elements.size() - 1];
+    const auto &second_last = _elements[_elements.size() - 2];
+    const auto &third_last = _elements[_elements.size() - 3];
+
+    glm::vec2 v2 = glm::vec2(last.point.x - second_last.point.x,
+                             last.point.y - second_last.point.y);
+    glm::vec2 v1 = glm::vec2(second_last.point.x - third_last.point.x,
+                             second_last.point.y - third_last.point.y);
+    double dot_product = glm::dot(v1, v2);
+    double norm_v1 = glm::length(v1);
+    double norm_v2 = glm::length(v2);
+    if (norm_v1 == 0 || norm_v2 == 0) {
+      return 0.0;
+    }
+    double cos_alpha = dot_product / (norm_v1 * norm_v2);
+    return glm::degrees(std::acos(cos_alpha));
+  }
 
  private:
   std::vector<PolyElement> _elements;

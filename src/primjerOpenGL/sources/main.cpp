@@ -168,8 +168,12 @@ int main(int argc, char *argv[]) {
 
   sjencar[1] = loadShader(argv[0], "shader1");
 
-  float obojaniTrokut[18] = {//  koordinate    boje
-                             -1, -1, 0, 1, 0, 0, 1, -1, 0, 0, 1, 0, 0, 1, 0, 0, 0, 1};
+  // clang-format off
+  float obojaniTrokut[18] = {// koordinate boja
+                             -1, -1, 0,  1, 0, 0,
+                              1, -1, 0,  0, 1, 0,
+                              0, 1, 0,   0, 0, 1};
+  // clang-format on
 
   glBindVertexArray(VAO[1]);
 
@@ -379,14 +383,15 @@ int main(int argc, char *argv[]) {
     // primjer 4b
     // samo jednom pozivamo iscrtavanje za sve instance jer smo grafickoj poslali polje
     // transformacija
-    //	glUseProgram(sjencar[3]->ID);
-    //	glViewport(width / 3,0, width / 3, height / 2);
+    glUseProgram(sjencar[3]->ID);
+    glViewport(width / 3, 0, width / 3, height / 2);
 
-    //	glBindVertexArray(VAO[3]);
-    //	glDrawElementsInstanced(GL_TRIANGLES, sizeof(indeksi)/sizeof(unsigned int),
-    // GL_UNSIGNED_INT, 0, 16); //poziv crtanja s indeksima i instancama
-    //
-    //	glBindVertexArray(0);
+    glBindVertexArray(VAO[3]);
+    glDrawElementsInstanced(GL_TRIANGLES, sizeof(indeksi) / sizeof(unsigned int),
+                            GL_UNSIGNED_INT, 0,
+                            16);  // poziv crtanja s indeksima i instancama
+
+    glBindVertexArray(0);
     //
     //
     glfwSwapBuffers(window);

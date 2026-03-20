@@ -1,13 +1,14 @@
 #version 330 core
+// Input
 layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec3 aCol;
+uniform vec3 u_color;
+uniform mat4 transform_matrix;
 
+// Output
 out vec3 color;
-
-uniform mat4 tMatrica;
 
 void main()
 {
-	color = aCol;
-    gl_Position = tMatrica*vec4(aPos, 1.0);
+	color = u_color;
+  gl_Position = transform_matrix*vec4(aPos, 1.0);
 }

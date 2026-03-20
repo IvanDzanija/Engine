@@ -1,5 +1,5 @@
 #version 330 core
-//postoje dodaci za sintaksno bojanje i parsiranje ovog koda, obavezno ih instalirajte za lakse programiranje. 
+//postoje dodaci za sintaksno bojanje i parsiranje ovog koda, obavezno ih instalirajte za lakse programiranje.
 //Instalirajte RenderDoc i obavezno pogledajte kako se na grafickoj kartici izvrsava ovaj jednostavni program.
 
 //prilikom jednog poziva iscrtavanja bit ce pokrenuto onoliko instanci ovog programa koliko ima vrhova za iscrtati!
@@ -10,9 +10,9 @@ layout (location = 0) in vec3 aPos;  //ovako definirana varijabla ce svakom sjen
 	//glEnableVertexAttribArray(---> 0 <---);
 
 //uniformna varijabla je jednaka svim sjencarima pri jednom pozivu iscrtavanja
-uniform vec3 u_color; 
+uniform vec3 u_color;
 //ovako se povezuju uniformni podaci iz glavne memorije i memorije na graf. kartici:
-		//																	 uniform vec3 ---> u_color <---; 
+		//																	 uniform vec3 ---> u_color <---;
 		//	GLint --->lokacijaUniformVarijable<--- = glGetUniformLocation(sjencar[0]->ID, ---> "u_color" <---);
 	//glUniform3f(--->lokacijaUniformVarijable<---, 0.5, 1.0, 1.0);
 
@@ -22,5 +22,5 @@ out vec3 color; //izlaz iz sjencara je boja vrha koja se prilikom rasterizacije 
 void main()
 {
 	color = u_color;
-    gl_Position = vec4(aPos, 1.0); //uvijek se mora definirati i pozicija vrha
+  gl_Position = vec4(aPos, 1.0); //uvijek se mora definirati i pozicija vrha
 }

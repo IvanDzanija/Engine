@@ -17,7 +17,8 @@ GLFWwindow *Graphics::_window = nullptr;
 // ----------------------------------
 // CONSTRUCTORS
 // ----------------------------------
-Graphics::Graphics(AppState &state, glm::vec3 clear_color) : _clear_color(clear_color) {
+Graphics::Graphics(AppState &state, glm::vec3 clear_color)
+    : _state(state), _clear_color(clear_color) {
   // Initialize OpenGL context and glad
   _load_glfw();
   gladLoadGL();
@@ -34,15 +35,7 @@ Graphics::Graphics(AppState &state, glm::vec3 clear_color) : _clear_color(clear_
   apply_clear_color();
 }
 
-Graphics::~Graphics() {
-  _width = 0;
-  _height = 0;
-  delete _raster_shader;
-  glDeleteBuffers(1, &VBO);
-  glDeleteVertexArrays(1, &VAO);
-
-  glfwTerminate();
-}
+Graphics::~Graphics() { glfwTerminate(); }
 
 // ----------------------------------
 // GETTERS & SETTERS
@@ -55,36 +48,32 @@ void Graphics::set_clear_color(const glm::vec3 &clear_color) noexcept {
   _clear_color = clear_color;
   apply_clear_color();
 }
+// State
+[[nodiscard]] AppState &Graphics::get_state() const noexcept { return _state; }
+void Graphics::set_state(AppState &state) noexcept { _state = state; }
+// Window
+[[nodiscard]] GLFWwindow *Graphics::get_window() noexcept { return _window; }
 
 // ----------------------------------
 // OPENGL ABSTRACTION
 // ----------------------------------
+void Graphics::apply_clear_color() const {
+  glClearColor(_clear_color.x, _clear_color.y, _clear_color.z, 1.0F);
+}
+
+// void Graphics::clear_window() { glClear(GL_COLOR_BUFFER_BIT); }
+
+void Graphics::start_frame() { glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); }
 
 void Graphics::end_frame() {
   if (glfwGetKey(_window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glfwSetWindowShouldClose(_window, true);
   }
-
-  // glBindTexture(GL_TEXTURE_2D, _rasterID);
-  glUseProgram(_raster_shader->ID);
-  glActiveTexture(GL_TEXTURE0);
-  glBindTexture(GL_TEXTURE_2D, _rasterID);
-  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, _width, _height, 0, GL_RGB, GL_FLOAT,
-               (const void *)_raster.data.data());
-
-  glBindVertexArray(VAO);
-  glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-  glBindVertexArray(0);
-
   glfwSwapBuffers(_window);
   glfwPollEvents();
 }
 
-bool Graphics::should_close() { return glfwWindowShouldClose(_window) == 0; }
-
-void Graphics::apply_clear_color() const {
-  glClearColor(_clear_color.x, _clear_color.y, _clear_color.z, 1.0F);
-}
+bool Graphics::should_close() { return glfwWindowShouldClose(_window) != 0; }
 
 int32 Graphics::register_mouse_click_method(void (*mouse_callback_user)(int, int,
                                                                         int)) {
@@ -113,11 +102,15 @@ int32 Graphics::register_framebuffer_resize_method(
 // ----------------------------------
 void Graphics::_mouse_button_callback(GLFWwindow *window, int32 button, int32 action,
                                       int32 mods) {
+  double xpos = 0.0;
+  double ypos = 0.0;
+  glfwGetCursorPos(window, &xpos, &ypos);
+
   if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS) {
-    (*_mouse_callback_user)(0);
+    (*_mouse_callback_user)(xpos, ypos, 0);
   }
   if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) {
-    (*_mouse_callback_user)(1);
+    (*_mouse_callback_user)(xpos, ypos, 1);
   }
 }
 
@@ -145,8 +138,8 @@ void Graphics::_load_glfw() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-  glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
-  _window = glfwCreateWindow(_width * 10, _height * 10, "Engine", nullptr, nullptr);
+  _window = glfwCreateWindow(_state.get_width(), _state.get_height(), "Engine", nullptr,
+                             nullptr);
 
   // Check for Valid Context
   if (_window == nullptr) {

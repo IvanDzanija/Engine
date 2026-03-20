@@ -42,6 +42,7 @@ class Shader {
   void set_uniform(const std::string &name, int value) const;
   void set_uniform(const std::string &name, float value) const;
   void set_uniform(const std::string &name, const glm::vec3 &value) const;
+  void set_uniform(const std::string &name, const glm::mat4 &value) const;
 
   // ----------------------------------
   // HELPER METHODS

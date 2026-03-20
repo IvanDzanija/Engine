@@ -11,7 +11,6 @@
 
 #include "AppState.h"
 #include "Global.h"
-#include "Raster.h"
 #include "Shader.h"
 
 namespace eng {
@@ -31,13 +30,18 @@ class Graphics {
   // Clear color
   [[nodiscard]] glm::vec3 get_clear_color() const noexcept;
   void set_clear_color(const glm::vec3 &clear_color) noexcept;
+  // State
+  [[nodiscard]] AppState &get_state() const noexcept;
+  void set_state(AppState &state) noexcept;
+  [[nodiscard]] static GLFWwindow *get_window() noexcept;
 
   // ----------------------------------
   // OPENGL ABSTRACTION
   // ----------------------------------
-  void clear_window();
-  void end_frame();  // pozovi funkcije u OpenGL-u koje iscrtaju raster
   void apply_clear_color() const;
+  // static void clear_window();
+  static void start_frame();
+  static void end_frame();
   static bool should_close();
   static int32 register_mouse_click_method(void (*mouse_callback_user)(int, int, int));
   static int32 register_cursor_position_method(
@@ -54,6 +58,7 @@ class Graphics {
   // ----------------------------------
   // FIELDS
   // ----------------------------------
+  AppState &_state;
   glm::vec3 _clear_color;
 
   // ----------------------------------

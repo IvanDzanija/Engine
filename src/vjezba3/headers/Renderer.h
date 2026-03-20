@@ -12,8 +12,7 @@ class Renderer {
   // ----------------------------------
   // CONSTRUCTORS
   // ----------------------------------
-  explicit Renderer() = default;
-  explicit Renderer(std::weak_ptr<Shader> uniform_color_shader);
+  explicit Renderer(Shader &uniform_color_shader);
   ~Renderer();
 
   // ----------------------------------
@@ -23,6 +22,28 @@ class Renderer {
 
  private:
   // ----------------------------------
+  // CONSTANTS
+  // ----------------------------------
+  static constexpr uint8 COLOR_INDICATOR_VERTICES_COUNT = 7;
+  // clang-format off
+  static constexpr std::array<float, COLOR_INDICATOR_VERTICES_COUNT * 3>
+      COLOR_INDICATOR_VERTICES = {
+          -1.0f, 0.0f, 0.0f,
+           0.0f, 0.0f, 0.0f,
+           0.0f, 1.0f, 0.0f,
+           0.0f, 1.0f, 0.0f,
+          -1.0f, 1.0f, 0.0f
+          -1.0f, 0.0f, 0.0f
+  };
+  // clang-format on
+
+  // ----------------------------------
+  // FIELDS
+  // ----------------------------------
+  GLuint _color_indicator_vao = 0;
+  GLuint _color_indicator_vbo = 0;
+  GLuint _color_indicator_ebo = 0;
+  // ----------------------------------
   // METHODS
   // ----------------------------------
   void _setup_color_indicator();
@@ -30,13 +51,7 @@ class Renderer {
 
   Shader *_load_uniform_color_shader(char *path);
 
-  // ----------------------------------
-  // FIELDS
-  // ----------------------------------
-  uint32 _color_indicator_vao = 0;
-  uint32 _color_indicator_vbo = 0;
-
-  Shader *_uniform_color_shader = nullptr;
+  Shader &_shader;
 };
 
 }  // namespace eng

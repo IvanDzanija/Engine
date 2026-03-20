@@ -71,21 +71,20 @@ Shader::~Shader() { glDeleteProgram(ID); }
 // PUBLIC METHODS
 // ----------------------------------
 void Shader::use() const { glUseProgram(ID); }
-
 void Shader::set_uniform(const std::string &name, bool value) const {
   glUniform1i(glGetUniformLocation(ID, name.c_str()), (int)value);
 }
-
 void Shader::set_uniform(const std::string &name, int value) const {
   glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
 }
-
 void Shader::set_uniform(const std::string &name, float value) const {
   glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
 }
-
 void Shader::set_uniform(const std::string &name, const glm::vec3 &value) const {
   glUniform3f(glGetUniformLocation(ID, name.c_str()), value.x, value.y, value.z);
+}
+void Shader::set_uniform(const std::string &name, const glm::mat4 &value) const {
+  glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &value[0][0]);
 }
 
 // ----------------------------------

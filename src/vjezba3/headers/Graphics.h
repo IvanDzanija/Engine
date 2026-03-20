@@ -48,6 +48,8 @@ class Graphics {
       void (*cursor_position_callback_user)(GLFWwindow *, double, double));
   static int32 register_framebuffer_resize_method(
       void (*framebuffer_resize_callback_user)(GLFWwindow *, int, int));
+  static int32 register_keyboard_press_method(
+      void (*keyboard_press_callback_user)(GLFWwindow *, int, int, int, int));
 
  private:
   // ----------------------------------

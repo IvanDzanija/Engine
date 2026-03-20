@@ -97,6 +97,12 @@ int32 Graphics::register_framebuffer_resize_method(
   return 0;
 }
 
+int32 Graphics::register_keyboard_press_method(
+    void (*keyboard_press_callback_user)(GLFWwindow *, int, int, int, int)) {
+  glfwSetKeyCallback(_window, keyboard_press_callback_user);
+  return 0;
+}
+
 // ----------------------------------
 // CALLBACKS
 // ----------------------------------
@@ -122,6 +128,9 @@ void Graphics::_cursor_position_callback(GLFWwindow *window, double xpos, double
 
 void Graphics::_framebuffer_size_callback(GLFWwindow *window, int32 width,
                                           int32 height) {
+  if (_framebuffer_resize_callback_user != nullptr) {
+    (*_framebuffer_resize_callback_user)(window, width, height);
+  }
   glViewport(0, 0, width, height);
 }
 

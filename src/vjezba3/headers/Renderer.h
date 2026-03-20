@@ -12,13 +12,13 @@ class Renderer {
   // ----------------------------------
   // CONSTRUCTORS
   // ----------------------------------
-  explicit Renderer(Shader &uniform_color_shader);
+  explicit Renderer(Shader &color_indicator_shader, Shader &triangles_shader);
   ~Renderer();
 
   // ----------------------------------
   // METHODS
   // ----------------------------------
-  void render(const AppState &state) const;
+  void render(AppState &state) const;
 
  private:
   // ----------------------------------
@@ -40,18 +40,26 @@ class Renderer {
   // ----------------------------------
   // FIELDS
   // ----------------------------------
+  // Color indicator
+  Shader &_color_indicator_shader;
   GLuint _color_indicator_vao = 0;
   GLuint _color_indicator_vbo = 0;
-  GLuint _color_indicator_ebo = 0;
+  // Triangles
+  Shader &_triangles_shader;
+  GLuint _triangles_vao = 0;
+  GLuint _triangles_vertices_vbo = 0;
+  GLuint _triangles_colors_vbo = 0;
+  GLuint _triangles_ebo = 0;
+
   // ----------------------------------
   // METHODS
   // ----------------------------------
   void _setup_color_indicator();
   void _draw_color_indicator(const AppState &state) const;
 
-  Shader *_load_uniform_color_shader(char *path);
-
-  Shader &_shader;
+  void _setup_triangles();
+  void _update_triangles(AppState &state) const;
+  void _draw_triangles(AppState &state) const;
 };
 
 }  // namespace eng

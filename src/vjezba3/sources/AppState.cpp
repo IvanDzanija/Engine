@@ -50,9 +50,21 @@ void AppState::set_active_component(color_component component) noexcept {
 [[nodiscard]] const std::vector<uint32> &AppState::get_indices() const noexcept {
   return _indices;
 }
+// Counts / helpers
+[[nodiscard]] uint32 AppState::get_vertex_count() const noexcept {
+  return static_cast<uint32>(_vertices.size());
+}
+[[nodiscard]] uint32 AppState::get_indices_count() const noexcept {
+  return static_cast<uint32>(_indices.size());
+}
+[[nodiscard]] uint32 AppState::get_triangle_count() const noexcept {
+  return get_indices_count() / 3;
+}
+[[nodiscard]] bool AppState::empty() const noexcept {
+  return _vertices.empty() || _colors.empty() || _indices.empty();
+}
 // Dirty flag
 [[nodiscard]] bool AppState::is_dirty() const noexcept { return _dirty; }
-
 void AppState::clear_dirty() noexcept { _dirty = false; }
 
 // ----------------------------------
@@ -75,13 +87,17 @@ void AppState::adjust_active_component(float delta) noexcept {
   _mark_dirty();
 }
 
-void AppState::add_point_screen(double x, double y) {
+void AppState::add_point_screen(int32 x, int32 y) {
   if (_width <= 0 || _height <= 0) {
     return;
   }
+  std::println("Adding point at screen coordinates ({}, {})", x, y);
+  std::println("Current framebuffer size: {}x{}", _width, _height);
+  y = _height - y;
 
   const float ndc_x = 2.0F * static_cast<float>(x) / static_cast<float>(_width) - 1.0F;
-  const float ndc_y = 1.0F - 2.0F * static_cast<float>(y) / static_cast<float>(_height);
+  const float ndc_y = 2.0F * static_cast<float>(y) / static_cast<float>(_height) - 1.0F;
+  std::println("Converted to NDC coordinates ({:.2}, {:.2})", ndc_x, ndc_y);
 
   add_point_ndc(ndc_x, ndc_y);
 }

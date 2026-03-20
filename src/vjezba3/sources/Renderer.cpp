@@ -5,22 +5,35 @@ namespace eng {
 // ----------------------------------
 // CONSTRUCTORS
 // ----------------------------------
-Renderer::Renderer(Shader &shader) : _shader(shader) { _setup_color_indicator(); }
+Renderer::Renderer(Shader &color_indicator_shader, Shader &triangles_shader)
+    : _color_indicator_shader(color_indicator_shader),
+      _triangles_shader(triangles_shader) {
+  _setup_color_indicator();
+  _setup_triangles();
+}
 Renderer::~Renderer() {
   glDeleteBuffers(1, &_color_indicator_vbo);
-  glDeleteBuffers(1, &_color_indicator_ebo);
   glDeleteVertexArrays(1, &_color_indicator_vao);
+  glDeleteBuffers(1, &_triangles_vertices_vbo);
+  glDeleteBuffers(1, &_triangles_colors_vbo);
+  glDeleteBuffers(1, &_triangles_ebo);
+  glDeleteVertexArrays(1, &_triangles_vao);
 };
 
 // ----------------------------------
 // METHODS
 // ----------------------------------
-void Renderer::render(const AppState &state) const { _draw_color_indicator(state); };
+void Renderer::render(AppState &state) const {
+  _draw_color_indicator(state);
+  _draw_triangles(state);
+};
 
+// ----------------------------------
+// PRIVATE METHODS
+// ----------------------------------
 void Renderer::_setup_color_indicator() {
   glGenVertexArrays(1, &_color_indicator_vao);
   glGenBuffers(1, &_color_indicator_vbo);
-  glGenBuffers(1, &_color_indicator_ebo);
 
   glBindVertexArray(_color_indicator_vao);
   {
@@ -35,17 +48,93 @@ void Renderer::_setup_color_indicator() {
   }
   glBindVertexArray(0);
 }
+
+void Renderer::_setup_triangles() {
+  glGenVertexArrays(1, &_triangles_vao);
+  glGenBuffers(1, &_triangles_vertices_vbo);
+  glGenBuffers(1, &_triangles_colors_vbo);
+  glGenBuffers(1, &_triangles_ebo);
+
+  // Triangles VAO
+  glBindVertexArray(_triangles_vao);
+  {
+    // Vertices VBO
+    glBindBuffer(GL_ARRAY_BUFFER, _triangles_vertices_vbo);
+    {
+      glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
+      glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+      glEnableVertexAttribArray(0);
+    }
+    // Colors VBO
+    glBindBuffer(GL_ARRAY_BUFFER, _triangles_colors_vbo);
+    {
+      glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
+      glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), nullptr);
+      glEnableVertexAttribArray(1);
+    }
+    // Triangles EBO
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _triangles_ebo);
+    {
+      glBufferData(GL_ELEMENT_ARRAY_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
+    }
+  }
+  glBindVertexArray(0);
+}
+
+void Renderer::_update_triangles(AppState &state) const {
+  glBindVertexArray(_triangles_vao);
+  {
+    // Vertices VBO
+    glBindBuffer(GL_ARRAY_BUFFER, _triangles_vertices_vbo);
+    {
+      glBufferData(GL_ARRAY_BUFFER, sizeof(float) * state.get_vertex_count() * 3,
+                   state.get_vertices().data(), GL_DYNAMIC_DRAW);
+      std::println("Updated triangles with {} vertices", state.get_vertex_count());
+    }
+    // Colors VBO
+    glBindBuffer(GL_ARRAY_BUFFER, _triangles_colors_vbo);
+    {
+      glBufferData(GL_ARRAY_BUFFER, sizeof(float) * state.get_vertex_count() * 3,
+                   state.get_colors().data(), GL_DYNAMIC_DRAW);
+      std::println("Updated triangles with {} vertices", state.get_vertex_count());
+    }
+    // Triangles EBO
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _triangles_ebo);
+    {
+      glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32) * state.get_indices_count(),
+                   state.get_indices().data(), GL_DYNAMIC_DRAW);
+      std::println("Updated triangles with {} indices", state.get_indices_count());
+    }
+  }
+  glBindVertexArray(0);
+  state.clear_dirty();
+}
+
 void Renderer::_draw_color_indicator(const AppState &state) const {
   // nacrtaj kvadrat u gornjem lijevom kutu koji pokazuje trenutnu boju
-  _shader.use();
-  _shader.set_uniform("u_color", state.get_current_color());
-  auto eye = glm::mat4(1);
-  _shader.set_uniform("transform_matrix", eye);
+  _color_indicator_shader.use();
+  _color_indicator_shader.set_uniform("u_color", state.get_current_color());
+  // auto eye = glm::mat4(1);
+  // _color_indicator_shader.set_uniform("transform_matrix", eye);
 
   glBindVertexArray(_color_indicator_vao);
   {
     glDrawArrays(GL_TRIANGLE_FAN, 0, COLOR_INDICATOR_VERTICES_COUNT);
   }
+  glBindVertexArray(0);
+}
+
+void Renderer::_draw_triangles(AppState &state) const {
+  if (state.is_dirty()) {
+    _update_triangles(state);
+  }
+  _triangles_shader.use();
+
+  glBindVertexArray(_triangles_vao);
+  {
+    glDrawElements(GL_TRIANGLES, state.get_indices_count(), GL_UNSIGNED_INT, nullptr);
+  }
+
   glBindVertexArray(0);
 }
 

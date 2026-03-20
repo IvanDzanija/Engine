@@ -24,33 +24,27 @@ class AppState {
   // Width
   [[nodiscard]] int32 get_width() const noexcept;
   void set_width(int32 width) noexcept;
-
   // Height
   [[nodiscard]] int32 get_height() const noexcept;
   void set_height(int32 height) noexcept;
-
   // Framebuffer size
   [[nodiscard]] std::pair<int32, int32> get_framebuffer_size() const noexcept;
   void set_framebuffer_size(int32 width, int32 height) noexcept;
-
   // Current color
   [[nodiscard]] const glm::vec3 &get_current_color() const noexcept;
   void set_current_color(const glm::vec3 &color) noexcept;
-
   // Active color component
   [[nodiscard]] color_component get_active_component() const noexcept;
   void set_active_component(color_component component) noexcept;
-
   // Geometry data
   [[nodiscard]] const std::vector<glm::vec3> &get_vertices() const noexcept;
   [[nodiscard]] const std::vector<glm::vec3> &get_colors() const noexcept;
   [[nodiscard]] const std::vector<uint32> &get_indices() const noexcept;
-
   // Counts / helpers
   [[nodiscard]] uint32 get_vertex_count() const noexcept;
+  [[nodiscard]] uint32 get_indices_count() const noexcept;
   [[nodiscard]] uint32 get_triangle_count() const noexcept;
   [[nodiscard]] bool empty() const noexcept;
-
   // Dirty flag
   [[nodiscard]] bool is_dirty() const noexcept;
   void clear_dirty() noexcept;
@@ -60,7 +54,7 @@ class AppState {
   // ----------------------------------
   void adjust_active_component(float delta) noexcept;
 
-  void add_point_screen(double x, double y);
+  void add_point_screen(int32 x, int32 y);
   void add_point_ndc(float x, float y);
 
   void clear_geometry() noexcept;

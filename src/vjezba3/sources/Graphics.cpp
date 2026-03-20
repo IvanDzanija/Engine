@@ -7,6 +7,8 @@
 #include <print>
 #include <string>
 
+#include "GLFW/glfw3.h"
+
 namespace eng {
 void (*Graphics::_mouse_callback_user)(int32, int32, int32) = nullptr;
 void (*Graphics::_framebuffer_resize_callback_user)(GLFWwindow *, int32,
@@ -147,8 +149,13 @@ void Graphics::_load_glfw() {
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+
   _window = glfwCreateWindow(_state.get_width(), _state.get_height(), "Engine", nullptr,
                              nullptr);
+  float xscale;
+  float yscale;
+  glfwGetWindowContentScale(_window, &xscale, &yscale);
+  _state.set_scale_factors(xscale, yscale);
 
   // Check for Valid Context
   if (_window == nullptr) {

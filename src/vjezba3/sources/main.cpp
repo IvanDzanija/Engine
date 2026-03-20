@@ -26,8 +26,6 @@ static eng::AppState app_state(width, height);
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
   app_state.set_framebuffer_size(width, height);
-  std::cout << app_state.get_framebuffer_size().first << " "
-            << app_state.get_framebuffer_size().second << std::endl;
   glViewport(0, 0, width, height);
 }
 
@@ -57,7 +55,6 @@ void keyboard_press_callback(GLFWwindow *window, int key, int scancode, int acti
 void mouse_click_callback(int32 x, int32 y, int32 button) {
   if (button == 0) {  // left click
     app_state.add_point_screen(x, y);
-    std::cout
   } else if (button == 1) {  // right click
     app_state.clear_geometry();
   }

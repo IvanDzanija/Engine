@@ -24,6 +24,17 @@ void AppState::set_framebuffer_size(int32 width, int32 height) noexcept {
   _width = width;
   _height = height;
 }
+[[nodiscard]] float AppState::get_xscale() const noexcept { return _xscale; }
+void AppState::set_xscale(float xscale) noexcept { _xscale = xscale; }
+[[nodiscard]] float AppState::get_yscale() const noexcept { return _yscale; }
+void AppState::set_yscale(float yscale) noexcept { _yscale = yscale; }
+[[nodiscard]] std::pair<float, float> AppState::get_scale_factors() const noexcept {
+  return {_xscale, _yscale};
+}
+void AppState::set_scale_factors(float xscale, float yscale) noexcept {
+  _xscale = xscale;
+  _yscale = yscale;
+}
 // Current color
 [[nodiscard]] const glm::vec3 &AppState::get_current_color() const noexcept {
   return _current_color;
@@ -91,12 +102,14 @@ void AppState::add_point_screen(int32 x, int32 y) {
   if (_width <= 0 || _height <= 0) {
     return;
   }
-  std::println("Adding point at screen coordinates ({}, {})", x, y);
-  std::println("Current framebuffer size: {}x{}", _width, _height);
+  x *= _xscale;
+  y *= _yscale;
   y = _height - y;
 
-  const float ndc_x = 2.0F * static_cast<float>(x) / static_cast<float>(_width) - 1.0F;
-  const float ndc_y = 2.0F * static_cast<float>(y) / static_cast<float>(_height) - 1.0F;
+  const float ndc_x =
+      (2.0F * static_cast<float>(x) / static_cast<float>(_width)) - 1.0F;
+  const float ndc_y =
+      (2.0F * static_cast<float>(y) / static_cast<float>(_height)) - 1.0F;
   std::println("Converted to NDC coordinates ({:.2}, {:.2})", ndc_x, ndc_y);
 
   add_point_ndc(ndc_x, ndc_y);

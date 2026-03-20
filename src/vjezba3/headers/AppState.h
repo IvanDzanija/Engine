@@ -30,6 +30,13 @@ class AppState {
   // Framebuffer size
   [[nodiscard]] std::pair<int32, int32> get_framebuffer_size() const noexcept;
   void set_framebuffer_size(int32 width, int32 height) noexcept;
+  // Scale factors
+  [[nodiscard]] float get_xscale() const noexcept;
+  void set_xscale(float xscale) noexcept;
+  [[nodiscard]] float get_yscale() const noexcept;
+  void set_yscale(float yscale) noexcept;
+  [[nodiscard]] std::pair<float, float> get_scale_factors() const noexcept;
+  void set_scale_factors(float xscale, float yscale) noexcept;
   // Current color
   [[nodiscard]] const glm::vec3 &get_current_color() const noexcept;
   void set_current_color(const glm::vec3 &color) noexcept;
@@ -53,10 +60,8 @@ class AppState {
   // METHODS
   // ----------------------------------
   void adjust_active_component(float delta) noexcept;
-
   void add_point_screen(int32 x, int32 y);
   void add_point_ndc(float x, float y);
-
   void clear_geometry() noexcept;
 
  private:
@@ -65,6 +70,8 @@ class AppState {
   // ----------------------------------
   int32 _width = 0;
   int32 _height = 0;
+  float _xscale = 1.0F;
+  float _yscale = 1.0F;
 
   glm::vec3 _current_color = glm::vec3(1.0F, 0.0F, 0.0F);
   color_component _active_component = color_component::red;

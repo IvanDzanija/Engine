@@ -78,5 +78,6 @@ class Graphics {
   // OPENGL SETUP
   // ----------------------------------
   void _load_glfw();
+  void _load_scale_factors();
 };
 }  // namespace eng

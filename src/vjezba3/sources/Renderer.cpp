@@ -118,12 +118,13 @@ void Renderer::_update_triangles(AppState &state) const {
       std::println("Updated triangles with {} vertices", state.get_vertex_count());
     }
     // Triangles EBO
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _triangles_ebo);
-    {
-      glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32) * state.get_indices_count(),
-                   state.get_indices().data(), GL_DYNAMIC_DRAW);
-      std::println("Updated triangles with {} indices", state.get_indices_count());
-    }
+    // glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _triangles_ebo);
+    //{
+    //  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(uint32) *
+    //  state.get_indices_count(),
+    //               state.get_indices().data(), GL_DYNAMIC_DRAW);
+    //  std::println("Updated triangles with {} indices", state.get_indices_count());
+    //}
   }
   glBindVertexArray(0);
   state.clear_dirty();
@@ -208,7 +209,11 @@ void Renderer::_draw_triangles(AppState &state) const {
 
   glBindVertexArray(_triangles_vao);
   {
-    glDrawElements(GL_TRIANGLES, state.get_indices_count(), GL_UNSIGNED_INT, nullptr);
+    // glDrawElements(GL_TRIANGLE_STRIP, state.get_indices_count(), GL_UNSIGNED_INT,
+    //                nullptr);
+    glDrawArrays(GL_TRIANGLE_STRIP, 0, state.get_vertex_count());
+    // glDrawElements(GL_TRIANGLES, state.get_indices_count(), GL_UNSIGNED_INT,
+    // nullptr);
   }
   glBindVertexArray(0);
   glBindVertexArray(_preview_triangle_vao);

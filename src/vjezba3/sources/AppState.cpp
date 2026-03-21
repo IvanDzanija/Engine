@@ -117,6 +117,7 @@ void AppState::add_point_screen(int32 x, int32 y) {
 void AppState::add_point_ndc(const glm::vec3 coords) {
   _vertices.push_back(coords);
   _colors.push_back(_current_color);
+  //_indices.push_back(_indices.size());  // Add index for the new vertex
 
   const auto point_count = static_cast<uint32>(_vertices.size());
 

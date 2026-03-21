@@ -30,6 +30,9 @@ class AppState {
   // Framebuffer size
   [[nodiscard]] std::pair<int32, int32> get_framebuffer_size() const noexcept;
   void set_framebuffer_size(int32 width, int32 height) noexcept;
+  // Cursor position
+  [[nodiscard]] glm::vec3 get_cursor_position() const noexcept;
+  void set_cursor_position(int32 x, int32 y) noexcept;
   // Scale factors
   [[nodiscard]] float get_xscale() const noexcept;
   void set_xscale(float xscale) noexcept;
@@ -61,7 +64,7 @@ class AppState {
   // ----------------------------------
   void adjust_active_component(float delta) noexcept;
   void add_point_screen(int32 x, int32 y);
-  void add_point_ndc(float x, float y);
+  void add_point_ndc(glm::vec3);
   void clear_geometry() noexcept;
 
  private:
@@ -72,6 +75,8 @@ class AppState {
   int32 _height = 0;
   float _xscale = 1.0F;
   float _yscale = 1.0F;
+
+  glm::vec3 _cursor_position = glm::vec3(0.0F, 0.0F, 0.0F);
 
   glm::vec3 _current_color = glm::vec3(1.0F, 0.0F, 0.0F);
   color_component _active_component = color_component::red;
@@ -86,6 +91,7 @@ class AppState {
   // METHODS
   // ----------------------------------
   void _clamp_current_color() noexcept;
+  [[nodiscard]] glm::vec3 _normalize_coords(int32 x, int32 y, int32 z) const noexcept;
   void _mark_dirty() noexcept;
 };
 

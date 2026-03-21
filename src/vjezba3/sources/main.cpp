@@ -60,6 +60,10 @@ void mouse_click_callback(int32 x, int32 y, int32 button) {
   }
 }
 
+void cursor_position(GLFWwindow *window, double xpos, double ypos) {
+  app_state.set_cursor_position(xpos, ypos);
+}
+
 int main(int argc, char *argv[]) {
   // Handles OpenGL context and window
   eng::Graphics screen(app_state, glm::vec3(0.15f, 0.1f, 0.1f));
@@ -80,6 +84,7 @@ int main(int argc, char *argv[]) {
   eng::Graphics::register_framebuffer_resize_method(framebuffer_size_callback);
   eng::Graphics::register_keyboard_press_method(keyboard_press_callback);
   eng::Graphics::register_mouse_click_method(mouse_click_callback);
+  eng::Graphics::register_cursor_position_method(cursor_position);
 
   while (!eng::Graphics::should_close()) {
     eng::Graphics::start_frame();

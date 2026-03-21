@@ -24,6 +24,15 @@ void AppState::set_framebuffer_size(int32 width, int32 height) noexcept {
   _width = width;
   _height = height;
 }
+
+// Cursor position
+[[nodiscard]] glm::vec3 AppState::get_cursor_position() const noexcept {
+  return _cursor_position;
+}
+void AppState::set_cursor_position(int32 x, int32 y) noexcept {
+  _cursor_position = _normalize_coords(x, y, 0);
+}
+// Scale factors
 [[nodiscard]] float AppState::get_xscale() const noexcept { return _xscale; }
 void AppState::set_xscale(float xscale) noexcept { _xscale = xscale; }
 [[nodiscard]] float AppState::get_yscale() const noexcept { return _yscale; }
@@ -102,21 +111,11 @@ void AppState::add_point_screen(int32 x, int32 y) {
   if (_width <= 0 || _height <= 0) {
     return;
   }
-  x *= _xscale;
-  y *= _yscale;
-  y = _height - y;
-
-  const float ndc_x =
-      (2.0F * static_cast<float>(x) / static_cast<float>(_width)) - 1.0F;
-  const float ndc_y =
-      (2.0F * static_cast<float>(y) / static_cast<float>(_height)) - 1.0F;
-  std::println("Converted to NDC coordinates ({:.2}, {:.2})", ndc_x, ndc_y);
-
-  add_point_ndc(ndc_x, ndc_y);
+  add_point_ndc(_normalize_coords(x, y, 0));
 }
 
-void AppState::add_point_ndc(float x, float y) {
-  _vertices.emplace_back(x, y, 0.0F);
+void AppState::add_point_ndc(const glm::vec3 coords) {
+  _vertices.push_back(coords);
   _colors.push_back(_current_color);
 
   const auto point_count = static_cast<uint32>(_vertices.size());
@@ -147,5 +146,17 @@ void AppState::_clamp_current_color() noexcept {
 }
 
 void AppState::_mark_dirty() noexcept { _dirty = true; }
+
+glm::vec3 AppState::_normalize_coords(int32 x, int32 y, int32 z) const noexcept {
+  // Scale
+  glm::vec3 coords(static_cast<float>(x) * _xscale, static_cast<float>(y) * _yscale,
+                   static_cast<float>(z));
+  // Invert y-axis and convert to NDC
+  coords.x = (2.0F * coords.x / static_cast<float>(_width)) - 1.0F;
+  coords.y =
+      (2.0F * (static_cast<float>(_height) - coords.y) / static_cast<float>(_height)) -
+      1.0F;
+  return coords;
+}
 
 }  // namespace eng

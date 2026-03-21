@@ -47,8 +47,11 @@ class Renderer {
   // Triangles
   Shader &_triangles_shader;
   GLuint _triangles_vao = 0;
+  GLuint _preview_triangle_vao = 0;
   GLuint _triangles_vertices_vbo = 0;
+  GLuint _preview_triangle_vertices_vbo = 0;
   GLuint _triangles_colors_vbo = 0;
+  GLuint _preview_triangle_colors_vbo = 0;
   GLuint _triangles_ebo = 0;
 
   // ----------------------------------
@@ -59,6 +62,8 @@ class Renderer {
 
   void _setup_triangles();
   void _update_triangles(AppState &state) const;
+  void _setup_preview_triangle();
+  void _update_preview_triangle(const AppState &state) const;
   void _draw_triangles(AppState &state) const;
 };
 

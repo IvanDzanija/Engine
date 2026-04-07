@@ -62,7 +62,7 @@ void Renderer::_draw_color_indicator(const AppState &state) const {
 
   glBindVertexArray(_color_indicator_vao);
   {
-    glDrawArrays(GL_TRIANGLE_FAN, 0, COLOR_INDICATOR_VERTICES_COUNT);
+    glDrawArrays(GL_TRIANGLES, 0, COLOR_INDICATOR_VERTICES_COUNT);
   }
   glBindVertexArray(0);
 }

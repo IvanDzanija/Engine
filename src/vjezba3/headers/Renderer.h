@@ -24,16 +24,16 @@ class Renderer {
   // ----------------------------------
   // CONSTANTS
   // ----------------------------------
-  static constexpr uint8 COLOR_INDICATOR_VERTICES_COUNT = 7;
+  static constexpr uint8 COLOR_INDICATOR_VERTICES_COUNT = 6;
   // clang-format off
   static constexpr std::array<float, COLOR_INDICATOR_VERTICES_COUNT * 3>
       COLOR_INDICATOR_VERTICES = {
-          -1.0f, 0.0f, 0.0f,
-           0.0f, 0.0f, 0.0f,
-           0.0f, 1.0f, 0.0f,
-           0.0f, 1.0f, 0.0f,
-          -1.0f, 1.0f, 0.0f
-          -1.0f, 0.0f, 0.0f
+          -1.0F, 1.0F, 0.0F,
+          -0.9F, 1.0F, 0.0F,
+          -1.0F, 0.9F, 0.0F,
+          -0.9F, 1.0F, 0.0F,
+          -1.0F, 0.9F, 0.0F,
+          -0.9F, 0.9F, 0.0F,
   };
   // clang-format on
 

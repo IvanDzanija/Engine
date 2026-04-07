@@ -111,10 +111,10 @@ void framebuffer_resize(GLFWwindow *window, int width, int height) {
 
 void draw_polygons(eng::Graphics &screen) {
   for (auto &polygon : polygons) {
-    std::optional<bool> convex = polygon.test_convex();
-    if (!convex.has_value() || (convex.has_value() && convex.value())) {
-      polygon.draw_filled(screen);
-    }
+    // std::optional<bool> convex = polygon.test_convex();
+    // if (!convex.has_value() || (convex.has_value() && convex.value())) {
+    polygon.draw_filled(screen);
+    //}
   }
 }
 

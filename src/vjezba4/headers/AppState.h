@@ -1,0 +1,98 @@
+#pragma once
+
+#include <glm/glm.hpp>
+#include <utility>
+#include <vector>
+
+#include "Global.h"
+
+namespace eng {
+
+enum class color_component : uint8 { red, green, blue };
+
+class AppState {
+ public:
+  // ----------------------------------
+  // CONSTRUCTORS
+  // ----------------------------------
+  AppState() = default;
+  AppState(int32 width, int32 height);
+
+  // ----------------------------------
+  // GETTERS & SETTERS
+  // ----------------------------------
+  // Width
+  [[nodiscard]] int32 get_width() const noexcept;
+  void set_width(int32 width) noexcept;
+  // Height
+  [[nodiscard]] int32 get_height() const noexcept;
+  void set_height(int32 height) noexcept;
+  // Framebuffer size
+  [[nodiscard]] std::pair<int32, int32> get_framebuffer_size() const noexcept;
+  void set_framebuffer_size(int32 width, int32 height) noexcept;
+  // Cursor position
+  [[nodiscard]] glm::vec3 get_cursor_position() const noexcept;
+  void set_cursor_position(int32 x, int32 y) noexcept;
+  // Scale factors
+  [[nodiscard]] float get_xscale() const noexcept;
+  void set_xscale(float xscale) noexcept;
+  [[nodiscard]] float get_yscale() const noexcept;
+  void set_yscale(float yscale) noexcept;
+  [[nodiscard]] std::pair<float, float> get_scale_factors() const noexcept;
+  void set_scale_factors(float xscale, float yscale) noexcept;
+  // Current color
+  [[nodiscard]] const glm::vec3 &get_current_color() const noexcept;
+  void set_current_color(const glm::vec3 &color) noexcept;
+  // Active color component
+  [[nodiscard]] color_component get_active_component() const noexcept;
+  void set_active_component(color_component component) noexcept;
+  // Geometry data
+  [[nodiscard]] const std::vector<glm::vec3> &get_vertices() const noexcept;
+  [[nodiscard]] const std::vector<glm::vec3> &get_colors() const noexcept;
+  [[nodiscard]] const std::vector<uint32> &get_indices() const noexcept;
+  // Counts / helpers
+  [[nodiscard]] uint32 get_vertex_count() const noexcept;
+  [[nodiscard]] uint32 get_indices_count() const noexcept;
+  [[nodiscard]] uint32 get_triangle_count() const noexcept;
+  [[nodiscard]] bool empty() const noexcept;
+  // Dirty flag
+  [[nodiscard]] bool is_dirty() const noexcept;
+  void clear_dirty() noexcept;
+
+  // ----------------------------------
+  // METHODS
+  // ----------------------------------
+  void adjust_active_component(float delta) noexcept;
+  void add_point_screen(int32 x, int32 y);
+  void add_point_ndc(glm::vec3);
+  void clear_geometry() noexcept;
+
+ private:
+  // ----------------------------------
+  // FIELDS
+  // ----------------------------------
+  int32 _width = 0;
+  int32 _height = 0;
+  float _xscale = 1.0F;
+  float _yscale = 1.0F;
+
+  glm::vec3 _cursor_position = glm::vec3(0.0F, 0.0F, 0.0F);
+
+  glm::vec3 _current_color = glm::vec3(1.0F, 0.0F, 0.0F);
+  color_component _active_component = color_component::red;
+
+  std::vector<glm::vec3> _vertices;
+  std::vector<glm::vec3> _colors;
+  std::vector<uint32> _indices;
+
+  bool _dirty = true;
+
+  // ----------------------------------
+  // METHODS
+  // ----------------------------------
+  void _clamp_current_color() noexcept;
+  [[nodiscard]] glm::vec3 _normalize_coords(int32 x, int32 y, int32 z) const noexcept;
+  void _mark_dirty() noexcept;
+};
+
+}  // namespace eng

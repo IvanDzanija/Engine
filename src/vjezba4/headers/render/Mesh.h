@@ -11,6 +11,10 @@
 #include "Vertex.h"
 
 namespace eng {
+struct BoundingBox {
+  glm::vec3 min;
+  glm::vec3 max;
+};
 class Mesh : public Renderable {
  public:
   // ----------------------------------
@@ -22,6 +26,12 @@ class Mesh : public Renderable {
   // Move constructor
   Mesh(std::vector<Vertex> &&vertices, std::vector<uint32> &&indices,
        std::vector<Texture> &&textures);
+
+  // Rule of 5
+  Mesh(const Mesh &other) = delete;
+  Mesh &operator=(const Mesh &other) = delete;
+  Mesh(Mesh &&other) noexcept;
+  Mesh &operator=(Mesh &&other) noexcept;
   ~Mesh() override;
 
   // ----------------------------------
@@ -35,6 +45,10 @@ class Mesh : public Renderable {
   // METHODS
   // ----------------------------------
   void draw() const override;
+
+  [[nodiscard]] BoundingBox get_bounding_box() const;
+
+  void apply_transform(const glm::mat4 &matrix);
 
  private:
   // ----------------------------------

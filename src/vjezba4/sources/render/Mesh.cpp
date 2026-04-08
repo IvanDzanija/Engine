@@ -18,6 +18,42 @@ Mesh::Mesh(std::vector<Vertex> &&vertices, std::vector<uint32> &&indices,
       _textures(std::move(textures)) {
   _setup_mesh();
 }
+
+// Move constructor
+Mesh::Mesh(Mesh &&other) noexcept
+    : _vertices(std::move(other._vertices)),
+      _indices(std::move(other._indices)),
+      _textures(std::move(other._textures)),
+      _vbo(other._vbo),
+      _ebo(other._ebo) {
+  _vao = other._vao;
+  other._vao = 0;
+  other._vbo = 0;
+  other._ebo = 0;
+}
+// Move assignment operator
+Mesh &Mesh::operator=(Mesh &&other) noexcept {
+  if (this != &other) {
+    // Clean up current resources
+    glDeleteVertexArrays(1, &_vao);
+    glDeleteBuffers(1, &_vbo);
+    glDeleteBuffers(1, &_ebo);
+
+    // Move data
+    _vertices = std::move(other._vertices);
+    _indices = std::move(other._indices);
+    _textures = std::move(other._textures);
+    _vao = other._vao;
+    _vbo = other._vbo;
+    _ebo = other._ebo;
+
+    // Reset source
+    other._vao = 0;
+    other._vbo = 0;
+    other._ebo = 0;
+  }
+  return *this;
+}
 // Destructor
 Mesh::~Mesh() {
   glDeleteVertexArrays(1, &_vao);
@@ -43,8 +79,35 @@ Mesh::~Mesh() {
 // ----------------------------------
 void Mesh::draw() const {
   glBindVertexArray(_vao);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   glDrawElements(GL_TRIANGLES, _indices.size(), GL_UNSIGNED_INT, nullptr);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glBindVertexArray(0);
+}
+
+BoundingBox Mesh::get_bounding_box() const {
+  glm::vec3 vmin = _vertices[0].coords;
+  glm::vec3 vmax = _vertices[0].coords;
+
+  for (const auto &vert : _vertices) {
+    const auto &v = vert.coords;
+    vmin = glm::min(vmin, v);
+    vmax = glm::max(vmax, v);
+  }
+  return {.min = vmin, .max = vmax};
+}
+
+void Mesh::apply_transform(const glm::mat4 &matrix) {
+  for (auto &vert : _vertices) {
+    auto &v = vert.coords;
+    v = glm::vec3(matrix * glm::vec4(v, 1.0F));
+  }
+
+  glBindBuffer(GL_ARRAY_BUFFER, _vbo);
+  // TODO: I dont think we need to copy over the entire vertex struct if only positions
+  // changed, but this is simpler
+  glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(Vertex), _vertices.data(),
+               GL_STATIC_DRAW);
 }
 
 // ----------------------------------

@@ -14,3 +14,7 @@ using int64 = int64_t;
 using uint64 = uint64_t;
 using char8 = char8_t;
 using char16 = char16_t;
+
+#define CHECK_GL()                  \
+  while (GLenum err = glGetError()) \
+    std::cout << "GL error at line " << __LINE__ << ": " << err << std::endl;

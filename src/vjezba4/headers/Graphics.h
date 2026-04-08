@@ -11,7 +11,7 @@
 
 #include "AppState.h"
 #include "Global.h"
-#include "Shader.h"
+#include "render/Shader.h"
 
 namespace eng {
 class Graphics {

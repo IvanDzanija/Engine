@@ -12,7 +12,15 @@
 namespace eng {
 class Shader {
  private:
+  // ----------------------------------
+  // CONSTANTS & ENUMS
+  // ----------------------------------
+  static constexpr std::string SHADERS_DIR = "/shaders/";
   enum class _ShaderType : uint8 { VERTEX, GEOMETRY, FRAGMENT, PROGRAM };
+
+  // ----------------------------------
+  // PRIVATE METHODS
+  // ----------------------------------
   static void _check_compiler_errors(uint32 shader, _ShaderType type);
   static std::string _read_shader_source(const char *path);
   static uint32 _compile_shader(const std::string &code, uint32 type);
@@ -26,10 +34,11 @@ class Shader {
   // ----------------------------------
   // CONSTRUCTORS
   // ----------------------------------
-  explicit Shader(const std::string &path, const std::string &name);
+  explicit Shader(const std::string &name);
+
+  // Rule of 5
   Shader(const Shader &) = delete;
   Shader &operator=(const Shader &) = delete;
-
   Shader(Shader &&other) noexcept;
   Shader &operator=(Shader &&other) noexcept;
   ~Shader();

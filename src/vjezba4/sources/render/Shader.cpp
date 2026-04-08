@@ -1,5 +1,6 @@
-#include "Shader.h"
+#include "render/Shader.h"
 
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <print>
@@ -9,7 +10,9 @@ namespace eng {
 // ----------------------------------
 // CONSTRUCTORS
 // ----------------------------------
-Shader::Shader(const std::string &path, const std::string &name) {
+Shader::Shader(const std::string &name) {
+  static std::string path = std::filesystem::current_path().string() + SHADERS_DIR;
+
   const std::string vertex_path = path + name + ".vert";
   const std::string fragment_path = path + name + ".frag";
   uint32 vertex;
@@ -51,7 +54,10 @@ Shader::Shader(const std::string &path, const std::string &name) {
   glDeleteShader(fragment);
 }
 
-Shader::Shader(Shader &&other) noexcept : ID(other.ID) { other.ID = 0; }
+Shader::Shader(Shader &&other) noexcept : ID(other.ID) {
+  other.ID = 0;
+  std::cout << "Shader move constructor called, new ID: " << ID << std::endl;
+}
 
 Shader &Shader::operator=(Shader &&other) noexcept {
   if (this != &other) {

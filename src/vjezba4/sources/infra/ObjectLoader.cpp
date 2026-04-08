@@ -2,6 +2,8 @@
 
 #include <filesystem>
 
+#include "math/TransformGenerator.h"
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
@@ -30,6 +32,7 @@ std::vector<Mesh> ObjectLoader::load_model(const std::string &name) {
 
   std::vector<Mesh> meshes;
   _process_node(scene->mRootNode, scene, meshes);
+  _normalize(meshes);
   return meshes;
 }
 
@@ -116,5 +119,30 @@ Mesh ObjectLoader::_process_mesh(aiMesh *mesh, const aiScene *scene) {
   //     loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
   // textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
   return {vertices, indices, textures};
+}
+
+void ObjectLoader::_normalize(std::vector<Mesh> &meshes) {
+  if (meshes.empty()) {
+    return;
+  }
+
+  glm::vec3 global_min(meshes[0].get_bounding_box().min);
+  glm::vec3 global_max(meshes[0].get_bounding_box().max);
+  for (uint32 i = 1; i < meshes.size(); ++i) {
+    auto box = meshes[i].get_bounding_box();
+    global_min = glm::min(global_min, box.min);
+    global_max = glm::max(global_max, box.max);
+  }
+
+  glm::vec3 center = (global_min + global_max) * 0.5F;
+  glm::vec3 range = global_max - global_min;
+  float M = std::max({range.x, range.y, range.z});
+
+  auto matrix = eng::TransformGenerator::scale_3D(glm::vec3(2.0f / M)) *
+                eng::TransformGenerator::translate_3D(-center);
+
+  for (auto &mesh : meshes) {
+    mesh.apply_transform(matrix);
+  }
 }
 }  // namespace eng

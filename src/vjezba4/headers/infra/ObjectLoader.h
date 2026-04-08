@@ -38,6 +38,8 @@ class ObjectLoader {
   static void _process_node(aiNode *node, const aiScene *scene,
                             std::vector<Mesh> &meshes);
   static Mesh _process_mesh(aiMesh *mesh, const aiScene *scene);
+
+  static void _normalize(std::vector<Mesh> &meshes);
 };
 }  // namespace eng
 

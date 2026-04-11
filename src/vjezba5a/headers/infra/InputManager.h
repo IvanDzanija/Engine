@@ -15,7 +15,10 @@ static GLFWwindow *window = nullptr;
 static std::shared_ptr<Transform> _target = nullptr;
 
 static std::array<bool, 1024> keys{};
-static float speed = 2.5F;
+
+// Mouse settings
+constexpr static float mouse_sensitivity = 100.F;
+constexpr static float speed = 2.5F;
 
 // Framebuffer
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
@@ -35,8 +38,21 @@ void keyboard_press_callback(GLFWwindow *window, int key, int scancode, int acti
   }
 }
 
-void mouse_callback(GLFWwindow *, double xpos, double ypos) {
-  // optional: implement camera rotation
+void cursor_position_callback(GLFWwindow *, double xpos, double ypos) {
+  auto prev_currson_postion = app_state.get_cursor_position();
+  app_state.set_cursor_position(xpos, ypos);  // Converts to NDC
+  auto curr_cursor_position = app_state.get_cursor_position();
+  xpos = curr_cursor_position.x;
+  ypos = curr_cursor_position.y;
+  static bool firstMouse = true;
+  if (firstMouse) {
+    firstMouse = false;
+    return;
+  }
+  float xoffset = (xpos - prev_currson_postion.x) * mouse_sensitivity;
+  float yoffset = (ypos - prev_currson_postion.y) * mouse_sensitivity;
+
+  _target->rotateFPS(xoffset, yoffset);
 }
 
 void scroll_callback(GLFWwindow *, double xoffset, double yoffset) {
@@ -44,7 +60,7 @@ void scroll_callback(GLFWwindow *, double xoffset, double yoffset) {
 }
 
 void mouse_button_callback(GLFWwindow *, int button, int action, int mods) {
-  // optional
+  // Empty
 }
 
 void register_movable(std::shared_ptr<Transform> target) {

@@ -48,11 +48,40 @@ void Transform::change_orientation(glm::vec3 look_at, glm::vec3 view_up) {
   }
   glm::vec3 z = glm::normalize(direction);
   glm::vec3 x = glm::normalize(glm::cross(view_up, z));
-  glm::vec3 y = glm::cross(z, x);
+  glm::vec3 y = glm::normalize(glm::cross(z, x));
 
   _x_axis = glm::vec4(x, 0.0F);
   _y_axis = glm::vec4(y, 0.0F);
   _z_axis = glm::vec4(z, 0.0F);
+}
+
+void Transform::rotateFPS(float xoffset, float yoffset, bool constrain_pitch) {
+  rotate_global_y(-xoffset);
+  rotate_local_x(yoffset);
+}
+
+void Transform::rotate_global_y(float angle_deg) {
+  float radians = glm::radians(angle_deg);
+  glm::mat4 rot = glm::rotate(glm::mat4(1.0F), radians, glm::vec3(0.0F, 1.0F, 0.0F));
+
+  _x_axis = rot * _x_axis;
+  _y_axis = rot * _y_axis;
+  _z_axis = rot * _z_axis;
+
+  _x_axis = glm::normalize(_x_axis);
+  _y_axis = glm::normalize(_y_axis);
+  _z_axis = glm::normalize(_z_axis);
+}
+
+void Transform::rotate_local_x(float angle_deg) {
+  float radians = glm::radians(angle_deg);
+  glm::mat4 rot = glm::rotate(glm::mat4(1.0F), radians, glm::vec3(_x_axis));
+
+  _y_axis = rot * _y_axis;
+  _z_axis = rot * _z_axis;
+
+  _y_axis = glm::normalize(_y_axis);
+  _z_axis = glm::normalize(_z_axis);
 }
 
 void Transform::move_local_z(float delta) { _origin += _z_axis * delta; }

@@ -19,6 +19,7 @@ int main(int argc, char *argv[]) {
   eng::Graphics::register_framebuffer_resize_method(
       eng::input::framebuffer_size_callback);
   eng::Graphics::register_keyboard_press_method(eng::input::keyboard_press_callback);
+  eng::Graphics::register_cursor_position_method(eng::input::cursor_position_callback);
   eng::Graphics::register_polling_method(eng::input::poll_events);
 
   eng::Renderer renderer;
@@ -46,6 +47,7 @@ int main(int argc, char *argv[]) {
   auto obj1 = std::make_shared<eng::Object>(model, shader);
   obj1->set_position({-1.5F, 0.0F, 0.0F});
   renderer.register_object(obj1);
+  // eng::input::register_movable(obj1);
 
   // Kocka 2
   auto obj2 = std::make_shared<eng::Object>(model, shader);

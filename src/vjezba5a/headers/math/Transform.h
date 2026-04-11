@@ -38,14 +38,15 @@ class Transform {
   // Transformations
   // Rotation
   void rotate(float angle, const glm::vec3 &axis);
-  void rotateFPS(float pitch, float yaw, bool constrain_pitch = true);
+  void rotateFPS(float xoffset, float yoffset, bool constrain_pitch = true);
+  void rotate_global_y(float angle_deg);
+  void rotate_local_x(float angle_deg);
+  // void rotateFPS(float pitch, float yaw, bool constrain_pitch = true);
 
   // Local movement
   void move_local_z(float delta);
   void move_local_x(float delta);
   void move_local_y(float delta);
-
-  // Global movement
 
  protected:
   // ----------------------------------

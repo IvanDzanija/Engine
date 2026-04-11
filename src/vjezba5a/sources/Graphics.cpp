@@ -119,7 +119,8 @@ int32 Graphics::register_polling_method(void (*polling_method_user)(float)) {
 
 // ----------------------------------
 // CALLBACKS
-// ----------------------------------
+// -------------------------------
+// ---
 void Graphics::_mouse_button_callback(GLFWwindow *window, int32 button, int32 action,
                                       int32 mods) {
   double xpos = 0.0;
@@ -176,6 +177,8 @@ void Graphics::_load_glfw() {
   }
   glfwSetWindowUserPointer(_window, this);
   glfwMakeContextCurrent(_window);
+
+  glfwSetInputMode(_window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 }
 
 }  // namespace eng

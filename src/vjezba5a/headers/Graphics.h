@@ -42,7 +42,7 @@ class Graphics {
   // ----------------------------------
   void apply_clear_color() const;
   // static void clear_window();
-  static void start_frame();
+  static void start_frame(float delta_time = 0.0F);
   static void end_frame();
   static bool should_close();
   static int32 register_mouse_click_method(void (*mouse_callback_user)(int, int, int));
@@ -52,6 +52,7 @@ class Graphics {
       void (*framebuffer_resize_callback_user)(GLFWwindow *, int, int));
   static int32 register_keyboard_press_method(
       void (*keyboard_press_callback_user)(GLFWwindow *, int, int, int, int));
+  static int32 register_polling_method(void (*polling_method_user)(float));
 
  private:
   // ----------------------------------
@@ -75,6 +76,7 @@ class Graphics {
   static void (*_cursor_position_callback_user)(GLFWwindow *, double, double);
   static void (*_mouse_callback_user)(int32, int32, int32);
   static void (*_framebuffer_resize_callback_user)(GLFWwindow *, int32, int32);
+  static void (*_polling_method_user)(float);
 
   // ----------------------------------
   // OPENGL SETUP

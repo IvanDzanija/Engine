@@ -49,6 +49,11 @@ class AppState {
   float _yscale = 1.0F;
 
   glm::vec3 _cursor_position = glm::vec3(0.0F, 0.0F, 0.0F);
+
+  // ----------------------------------
+  // PRIVATE METHODS
+  // ----------------------------------
+  [[nodiscard]] glm::vec3 _normalize_coords(int32 x, int32 y, int32 z) const noexcept;
 };
 
 }  // namespace eng

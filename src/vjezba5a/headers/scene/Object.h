@@ -32,7 +32,6 @@ class Object : public Transform {
   // METHODS
   // ----------------------------------
   void render(const glm::mat4 &projection_matrix, const glm::mat4 &view_matrix) const;
-
   void add_renderable(std::shared_ptr<Renderable> renderable);
 
  private:

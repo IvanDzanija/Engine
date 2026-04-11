@@ -15,6 +15,8 @@ void (*Graphics::_framebuffer_resize_callback_user)(GLFWwindow *, int32,
                                                     int32) = nullptr;
 void (*Graphics::_cursor_position_callback_user)(GLFWwindow *, double,
                                                  double) = nullptr;
+void (*Graphics::_polling_method_user)(float) = nullptr;
+
 GLFWwindow *Graphics::_window = nullptr;
 // ----------------------------------
 // CONSTRUCTORS
@@ -65,14 +67,19 @@ void Graphics::apply_clear_color() const {
 
 // void Graphics::clear_window() { glClear(GL_COLOR_BUFFER_BIT); }
 
-void Graphics::start_frame() { glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); }
+void Graphics::start_frame(float delta_time) {
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glfwPollEvents();
+  if (_polling_method_user != nullptr) {
+    (*_polling_method_user)(delta_time);
+  }
+}
 
 void Graphics::end_frame() {
   if (glfwGetKey(_window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
     glfwSetWindowShouldClose(_window, true);
   }
   glfwSwapBuffers(_window);
-  glfwPollEvents();
 }
 
 bool Graphics::should_close() { return glfwWindowShouldClose(_window) != 0; }
@@ -102,6 +109,11 @@ int32 Graphics::register_framebuffer_resize_method(
 int32 Graphics::register_keyboard_press_method(
     void (*keyboard_press_callback_user)(GLFWwindow *, int, int, int, int)) {
   glfwSetKeyCallback(_window, keyboard_press_callback_user);
+  return 0;
+}
+
+int32 Graphics::register_polling_method(void (*polling_method_user)(float)) {
+  _polling_method_user = polling_method_user;
   return 0;
 }
 

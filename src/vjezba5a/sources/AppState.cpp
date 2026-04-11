@@ -30,7 +30,7 @@ void AppState::set_framebuffer_size(int32 width, int32 height) noexcept {
   return _cursor_position;
 }
 void AppState::set_cursor_position(int32 x, int32 y) noexcept {
-  //_cursor_position = _normalize_coords(x, y, 0);
+  _cursor_position = _normalize_coords(x, y, 0);
 }
 // Scale factors
 [[nodiscard]] float AppState::get_xscale() const noexcept { return _xscale; }
@@ -43,5 +43,20 @@ void AppState::set_yscale(float yscale) noexcept { _yscale = yscale; }
 void AppState::set_scale_factors(float xscale, float yscale) noexcept {
   _xscale = xscale;
   _yscale = yscale;
+}
+
+// ----------------------------------
+// PRIVATE METHODS
+// ----------------------------------
+glm::vec3 AppState::_normalize_coords(int32 x, int32 y, int32 z) const noexcept {
+  // Scale
+  glm::vec3 coords(static_cast<float>(x) * _xscale, static_cast<float>(y) * _yscale,
+                   static_cast<float>(z));
+  // Invert y-axis and convert to NDC
+  coords.x = (2.0F * coords.x / static_cast<float>(_width)) - 1.0F;
+  coords.y =
+      (2.0F * (static_cast<float>(_height) - coords.y) / static_cast<float>(_height)) -
+      1.0F;
+  return coords;
 }
 }  // namespace eng

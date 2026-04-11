@@ -17,6 +17,7 @@
 #include <print>
 
 static int width = 900, height = 600;
+static int size = std::min(width / 3, height / 2);
 #include <unistd.h>  // getcwd
 
 #include <climits>  // PATH_MAX
@@ -67,6 +68,7 @@ Shader *loadShader(char *path, char *naziv) {
 void framebuffer_size_callback(GLFWwindow *window, int Width, int Height) {
   width = Width;
   height = Height;
+  size = std::min(width / 3, height / 2);
 }
 
 /*****************************************************************************************************************************
@@ -318,9 +320,19 @@ int main(int argc, char *argv[]) {
   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 
   glBindVertexArray(0);
+  float aspect = 1.0F;
+  int topHeight = (width / 3) / aspect;
+  int bottomHeight = (width / 2) / aspect;
 
   // glavna petlja programa
   while (!glfwWindowShouldClose(window)) {
+    float aspect = 1.0F;
+    int topHeight = (width / 3) / aspect;
+    int bottomHeight = (width / 2) / aspect;
+    float scale = (float)height / (topHeight + bottomHeight);
+
+    topHeight *= scale;
+    bottomHeight *= scale;
     glClear(GL_COLOR_BUFFER_BIT);
 
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
@@ -332,8 +344,8 @@ int main(int argc, char *argv[]) {
     glUseProgram(sjencar[0]->ID);                          // koristi sjencar shader0
     glUniform3f(lokacijaUniformVarijable, 0.5, 1.0, 1.0);  // pogledaj shader0.vert
 
-    glViewport(0, height / 2, width / 3,
-               height / 2);  // u koji dio okvira prozora se iscrtava (gore lijevo)
+    glViewport(0, bottomHeight, width / 3, topHeight);
+    std::cout << topHeight / ((float)width / 3) << std::endl;
 
     glBindVertexArray(VAO[0]);         // koristi VAO[0] za crtanje
     glDrawArrays(GL_TRIANGLES, 0, 3);  // poziv crtanja
@@ -344,7 +356,7 @@ int main(int argc, char *argv[]) {
 
     glUseProgram(sjencar[1]->ID);
 
-    glViewport(width / 3, height / 2, width / 3, height / 2);
+    glViewport(width / 3, bottomHeight, width / 3, topHeight);
 
     glBindVertexArray(VAO[1]);
     glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -354,7 +366,8 @@ int main(int argc, char *argv[]) {
     // primjer 3
 
     glUseProgram(sjencar[1]->ID);
-    glViewport(2 * width / 3, height / 2, width / 3, height / 2);
+
+    glViewport(2 * width / 3, bottomHeight, width / 3, topHeight);
 
     glBindVertexArray(VAO[2]);
     glDrawElements(GL_TRIANGLES, sizeof(indeksi) / sizeof(unsigned int),
@@ -366,7 +379,9 @@ int main(int argc, char *argv[]) {
     // za svaku instancu objekta saljemo naredbu za iscrtavanje. podaci o modelu ostaju
     // na grafickoj, mijenja se samo uniform varijabla.
     glUseProgram(sjencar[2]->ID);
-    glViewport(0, 0, width / 3, height / 2);
+    glViewport(0, 0, width / 2, bottomHeight);
+
+    std::cout << bottomHeight / ((float)width / 3) << std::endl;
 
     glBindVertexArray(VAO[2]);
 
@@ -384,7 +399,7 @@ int main(int argc, char *argv[]) {
     // samo jednom pozivamo iscrtavanje za sve instance jer smo grafickoj poslali polje
     // transformacija
     glUseProgram(sjencar[3]->ID);
-    glViewport(width / 3, 0, width / 3, height / 2);
+    glViewport(width / 2, 0, width / 2, bottomHeight);
 
     glBindVertexArray(VAO[3]);
     glDrawElementsInstanced(GL_TRIANGLES, sizeof(indeksi) / sizeof(unsigned int),

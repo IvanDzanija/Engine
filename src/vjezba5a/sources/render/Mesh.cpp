@@ -31,6 +31,7 @@ Mesh::Mesh(Mesh &&other) noexcept
   other._vbo = 0;
   other._ebo = 0;
 }
+
 // Move assignment operator
 Mesh &Mesh::operator=(Mesh &&other) noexcept {
   if (this != &other) {

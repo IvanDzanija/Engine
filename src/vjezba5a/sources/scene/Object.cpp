@@ -22,11 +22,10 @@ void Object::render(const glm::mat4 &projection_matrix,
   }
 
   _shader->use();
-  _shader->set_uniform("u_color", glm::vec3(1.0F, 0.0F, 0.0F));
+
   _shader->set_uniform("u_projection", projection_matrix);
   _shader->set_uniform("u_view", view_matrix);
   _shader->set_uniform("u_model", model_matrix());
-
   std::println("Projection matrix:");
   matrix_print(projection_matrix);
   std::println("View matrix:");
@@ -34,12 +33,18 @@ void Object::render(const glm::mat4 &projection_matrix,
   std::println("Model matrix:");
   matrix_print(model_matrix());
 
+  _shader->set_uniform("u_use_vertex_color", false);
+  _shader->set_uniform("u_color", glm::vec3(1.0F, 0.0F, 0.0F));
   for (const auto &renderable : _renderables) {
     renderable->draw();
   }
+
+  _shader->set_uniform("u_use_vertex_color", true);
+  _local_axis.draw();
 }
 
 void Object::add_renderable(std::shared_ptr<Renderable> renderable) {
   _renderables.push_back(std::move(renderable));
 }
+
 }  // namespace eng

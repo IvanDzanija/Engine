@@ -7,6 +7,7 @@
 #include <memory>
 
 #include "math/Transform.h"
+#include "render/Axis.h"
 #include "render/Mesh.h"
 #include "render/Shader.h"
 
@@ -20,7 +21,7 @@ class Object : public Transform {
   Object(std::shared_ptr<Shader> shader);
   Object(std::vector<std::shared_ptr<Renderable>> meshes,
          std::shared_ptr<Shader> shader);
-  ~Object() = default;
+  ~Object() override = default;
 
   // ----------------------------------
   // GETTERS & SETTERS
@@ -38,7 +39,11 @@ class Object : public Transform {
   std::vector<std::shared_ptr<Renderable>> _renderables;
   std::shared_ptr<Shader> _shader;
   std::shared_ptr<Texture> _texture;
+  Axis _local_axis;
   // Material material;
+
+  void _draw_axes(const glm::mat4 &projection_matrix,
+                  const glm::mat4 &view_matrix) const;
 };
 
 }  // namespace eng

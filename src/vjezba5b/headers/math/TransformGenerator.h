@@ -4,6 +4,7 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <iostream>
 
 namespace eng {
 class TransformGenerator {
@@ -73,7 +74,15 @@ class TransformGenerator {
 
   static glm::mat4 frustum(float left, float right, float bottom, float top, float near,
                            float far) {
-    return glm::frustum(left, right, bottom, top, near, far);
+    glm::mat4 mat(0.0F);
+    mat[0][0] = (2.0F * near) / (right - left);
+    mat[1][1] = (2.0F * near) / (top - bottom);
+    mat[2][0] = (right + left) / (right - left);
+    mat[2][1] = (top + bottom) / (top - bottom);
+    mat[2][2] = -(far + near) / (far - near);
+    mat[2][3] = -1.0F;
+    mat[3][2] = -(2.0F * far * near) / (far - near);
+    return mat;
   }
 };
 }  // namespace eng

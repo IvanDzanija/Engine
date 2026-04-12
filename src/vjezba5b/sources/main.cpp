@@ -6,6 +6,7 @@
 #include "infra/InputManager.h"
 #include "infra/ResourceManager.h"
 #include "math/TransformGenerator.h"
+#include "render/Mesh.h"
 #include "render/Renderer.h"
 #include "render/Shader.h"
 
@@ -47,36 +48,6 @@ int main(int argc, char *argv[]) {
   camera->change_orientation({0.0F, 0.0F, 0.0F});
   renderer.link_camera(camera);
   eng::input::register_movable(camera);
-
-  // TESTING
-  auto mat = glm::translate(glm::mat4(1.0F), glm::vec3(9.0F, 5.0F, -2.0F));
-  eng::matrix_print(mat);
-  auto mat1 = eng::TransformGenerator::translate_3D(glm::vec3(9.0F, 5.0F, -2.0F));
-  eng::matrix_print(mat1);
-  assert(mat == mat1);
-
-  mat = glm::rotate(glm::mat4(1.F), glm::radians(31.0F), glm::vec3(0.5F, 1.0F, 1.0F));
-  mat1 = eng::TransformGenerator::rotate_3D(glm::vec3(0.5F, 1.0F, 1.0F), 31.0F);
-  eng::matrix_print(mat);
-  eng::matrix_print(mat1);
-  assert(nearlyEqual(mat, mat1, 0.0001F));
-
-  mat = glm::scale(glm::mat4(1.F), glm::vec3(0.5F, 0.5F, 0.5F));
-  mat1 = eng::TransformGenerator::scale_3D(glm::vec3(0.5F, 0.5F, 0.5F));
-  eng::matrix_print(mat);
-  eng::matrix_print(mat1);
-  assert(nearlyEqual(mat, mat1, 0.0001F));
-
-  mat = glm::lookAt(glm::vec3(1.0F, 2.0F, 3.0F), glm::vec3(0.0F, 0.0F, 0.0F),
-                    glm::vec3(0.0F, 1.0F, 0.0F));
-  mat1 = eng::TransformGenerator::look_at_matrix(glm::vec3(1.0F, 2.0F, 3.0F),
-                                                 glm::vec3(0.0F, 0.0F, 0.0F),
-                                                 glm::vec3(0.0F, 1.0F, 0.0F));
-  eng::matrix_print(mat);
-  eng::matrix_print(mat1);
-  assert(nearlyEqual(mat, mat1, 0.0001F));
-
-  // exit(1);
 
   // Kocka
   auto model = eng::ResourceManager::get_model("kocka.obj");

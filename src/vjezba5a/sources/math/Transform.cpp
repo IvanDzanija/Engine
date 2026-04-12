@@ -61,8 +61,7 @@ void Transform::rotateFPS(float xoffset, float yoffset, bool constrain_pitch) {
 }
 
 void Transform::rotate_global_y(float angle_deg) {
-  float radians = glm::radians(angle_deg);
-  glm::mat4 rot = glm::rotate(glm::mat4(1.0F), radians, glm::vec3(0.0F, 1.0F, 0.0F));
+  glm::mat4 rot = TransformGenerator::rotate_3D(glm::vec3(0.0F, 1.0F, 0.0F), angle_deg);
 
   _x_axis = rot * _x_axis;
   _y_axis = rot * _y_axis;
@@ -74,8 +73,7 @@ void Transform::rotate_global_y(float angle_deg) {
 }
 
 void Transform::rotate_local_x(float angle_deg) {
-  float radians = glm::radians(angle_deg);
-  glm::mat4 rot = glm::rotate(glm::mat4(1.0F), radians, glm::vec3(_x_axis));
+  glm::mat4 rot = TransformGenerator::rotate_3D(_x_axis, angle_deg);
 
   _y_axis = rot * _y_axis;
   _z_axis = rot * _z_axis;

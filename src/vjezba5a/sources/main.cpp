@@ -40,10 +40,6 @@ int main(int argc, char *argv[]) {
   renderer.link_camera(camera);
   eng::input::register_movable(camera);
 
-  auto mat = glm::translate(glm::mat4(1.0F), glm::vec3(9.0F, 5.0F, -2.0F));
-  eng::matrix_print(mat);
-  exit(1);
-
   // Kocka
   auto model = eng::ResourceManager::get_model("kocka.obj");
 

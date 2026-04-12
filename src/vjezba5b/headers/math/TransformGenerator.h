@@ -38,20 +38,37 @@ class TransformGenerator {
 
     glm::mat4 mat(1.0F);
     mat[0][0] = cos_angle + (axis.x * axis.x * (1.0F - cos_angle));
-    mat[0][1] = (axis.x * axis.y * (1.0F - cos_angle)) - (axis.z * sin_angle);
-    mat[0][2] = (axis.x * axis.z * (1.0F - cos_angle)) + (axis.y * sin_angle);
-    mat[1][0] = (axis.y * axis.x * (1.0F - cos_angle)) + (axis.z * sin_angle);
+    mat[1][0] = (axis.x * axis.y * (1.0F - cos_angle)) - (axis.z * sin_angle);
+    mat[2][0] = (axis.x * axis.z * (1.0F - cos_angle)) + (axis.y * sin_angle);
+    mat[0][1] = (axis.y * axis.x * (1.0F - cos_angle)) + (axis.z * sin_angle);
     mat[1][1] = cos_angle + (axis.y * axis.y * (1.0F - cos_angle));
-    mat[1][2] = (axis.y * axis.z * (1.0F - cos_angle)) - (axis.x * sin_angle);
-    mat[2][0] = (axis.z * axis.x * (1.0F - cos_angle)) - (axis.y * sin_angle);
-    mat[2][1] = (axis.z * axis.y * (1.0F - cos_angle)) + (axis.x * sin_angle);
+    mat[2][1] = (axis.y * axis.z * (1.0F - cos_angle)) - (axis.x * sin_angle);
+    mat[0][2] = (axis.z * axis.x * (1.0F - cos_angle)) - (axis.y * sin_angle);
+    mat[1][2] = (axis.z * axis.y * (1.0F - cos_angle)) + (axis.x * sin_angle);
     mat[2][2] = cos_angle + (axis.z * axis.z * (1.0F - cos_angle));
 
     return mat;
   }
 
   static glm::mat4 look_at_matrix(glm::vec3 eye, glm::vec3 center, glm::vec3 view_up) {
-    return glm::lookAt(eye, center, view_up);
+    glm::vec3 f = glm::normalize(center - eye);
+    glm::vec3 s = glm::normalize(glm::cross(f, view_up));
+    glm::vec3 u = glm::cross(s, f);
+
+    glm::mat4 T = translate_3D(-eye);
+
+    glm::mat4 R(1.0F);
+    R[0][0] = s.x;
+    R[1][0] = s.y;
+    R[2][0] = s.z;
+    R[0][1] = u.x;
+    R[1][1] = u.y;
+    R[2][1] = u.z;
+    R[0][2] = -f.x;
+    R[1][2] = -f.y;
+    R[2][2] = -f.z;
+
+    return R * T;
   }
 
   static glm::mat4 frustum(float left, float right, float bottom, float top, float near,

@@ -38,6 +38,7 @@ void keyboard_press_callback(GLFWwindow *window, int key, int scancode, int acti
   }
 }
 
+// Cursor
 void cursor_position_callback(GLFWwindow *window, double xpos, double ypos) {
   auto prev_currson_postion = app_state.get_cursor_position();
   app_state.set_cursor_position(xpos, ypos);  // Converts to NDC
@@ -57,7 +58,7 @@ void cursor_position_callback(GLFWwindow *window, double xpos, double ypos) {
 }
 
 void scroll_callback(GLFWwindow *, double xoffset, double yoffset) {
-  // optional: zoom
+  // Empty
 }
 
 void mouse_button_callback(GLFWwindow *, int button, int action, int mods) {

@@ -36,8 +36,8 @@ glm::mat4 Transform::view_matrix() const {
   vector_print(_y_axis);
   std::cout << "Z axis: ";
   vector_print(_z_axis);
-  return glm::lookAt(glm::vec3(_origin), glm::vec3(_origin - _z_axis),
-                     glm::vec3(_y_axis));
+  return TransformGenerator::look_at_matrix(
+      glm::vec3(_origin), glm::vec3(_origin - _z_axis), glm::vec3(_y_axis));
 }
 
 void Transform::change_orientation(glm::vec3 look_at, glm::vec3 view_up) {

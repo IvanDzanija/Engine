@@ -51,7 +51,6 @@ void ObjectLoader::_process_node(aiNode *node, const aiScene *scene,
 }
 
 Mesh ObjectLoader::_process_mesh(aiMesh *mesh, const aiScene *scene) {
-  // data to fill
   std::vector<Vertex> vertices;
   std::vector<uint32> indices;
   std::vector<Texture> textures;

@@ -35,9 +35,8 @@ class Transform {
   // Orientation
   void change_orientation(glm::vec3 look_at, glm::vec3 view_up = {0, 1, 0});
 
-  // Transformations
+  // TRANSFORMATIONS
   // Rotation
-  void rotate(float angle, const glm::vec3 &axis);
   void rotateFPS(float xoffset, float yoffset, bool constrain_pitch = true);
   void rotate_global_y(float angle_deg);
   void rotate_local_x(float angle_deg);

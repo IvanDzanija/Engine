@@ -30,33 +30,7 @@ class Object {
   // METHODS
   // ----------------------------------
   void render() const;
-
   void add_renderable(std::shared_ptr<Renderable> renderable);
-
-  // Metoda render prema specifikaciji iz dijagrama
-  // void render(const glm::mat4 &projection, const glm::mat4 &view, const Light &light)
-  // {
-  //   if (!shader || !mesh) {
-  //     return;
-  //   }
-
-  //   shader->use();
-
-  //   // Slanje uniformi u shader
-  //   shader->setMat4("projection", projection);
-  //   shader->setMat4("view", view);
-  //   shader->setMat4("model", getModelMatrix());  // Iz klase Transform
-
-  //   // Slanje podataka o svjetlu (Light je klasa iz tvog dijagrama)
-  //   shader->setVec3("lightPos", light.getPosition());
-  //   shader->setVec3("lightColor", light.getIntensity());
-
-  //   if (texture) {
-  //     glBindTexture(GL_TEXTURE_2D, texture->getTextureID());
-  //   }
-
-  //   mesh->draw();
-  // }
 
  private:
   std::vector<std::shared_ptr<Renderable>> _renderables;

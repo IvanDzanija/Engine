@@ -12,7 +12,6 @@ namespace eng {
 
 class Renderer {
  private:
-  // Lista svih objekata koje treba iscrtati
   std::vector<std::shared_ptr<Object>> _objects;
 
  public:
@@ -26,10 +25,8 @@ class Renderer {
     std::erase(_objects, obj);
   }
 
-  // Dijagram: update(deltaTime)
   void update(float deltaTime) {}
 
-  // Dijagram: render() - SRCE SUSTAVA
   void render() {
     for (const auto &obj : _objects) {
       obj->render();

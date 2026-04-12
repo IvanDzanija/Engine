@@ -13,11 +13,6 @@
 static int32 width = 500;
 static int32 height = 500;
 eng::AppState app_state(width, height);
-bool nearlyEqual(const glm::mat4 &a, const glm::mat4 &b, float eps) {
-  for (int i = 0; i < 4; ++i)
-    if (!glm::all(glm::epsilonEqual(a[i], b[i], eps))) return false;
-  return true;
-}
 
 int main(int argc, char *argv[]) {
   // ----------------------------------

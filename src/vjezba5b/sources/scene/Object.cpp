@@ -29,12 +29,6 @@ void Object::render(const glm::mat4 &projection_matrix,
   _shader->set_uniform("u_projection", projection_matrix);
   _shader->set_uniform("u_view", view_matrix);
   _shader->set_uniform("u_model", model_matrix());
-  std::println("Projection matrix:");
-  matrix_print(projection_matrix);
-  std::println("View matrix:");
-  matrix_print(view_matrix);
-  std::println("Model matrix:");
-  matrix_print(model_matrix());
 
   // Draw object
   _shader->set_uniform("u_use_vertex_color", false);

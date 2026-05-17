@@ -9,17 +9,20 @@ namespace eng {
 // GETTERS & SETTERS
 // ----------------------------------
 // Position
-[[nodiscard]] glm::vec3 Transform::get_position() const noexcept { return _origin; }
+[[nodiscard]] glm::vec3 Transform::get_position() const noexcept {
+  return glm::xyz(_origin);
+}
 void Transform::set_position(glm::vec3 pos) { _origin = glm::vec4(pos, 1.0F); }
 // Scale
-[[nodiscard]] glm::vec3 Transform::get_scale() const noexcept { return _scale; }
+[[nodiscard]] glm::vec3 Transform::get_scale() const noexcept {
+  return glm::xyz(_scale);
+}
 void Transform::set_scale(glm::vec3 scale) { _scale = glm::vec4(scale, 1.0F); }
 
 // ----------------------------------
 // METHODS
 // ----------------------------------
 glm::mat4 Transform::model_matrix() const {
-  // Model is always in canonical form and we use this to place it into the world.
   glm::mat4 matrix(1.0F);
   matrix[0] = _x_axis * _scale.x;
   matrix[1] = _y_axis * _scale.y;
@@ -29,15 +32,6 @@ glm::mat4 Transform::model_matrix() const {
 }
 
 glm::mat4 Transform::view_matrix() const {
-  // This is used for camera and it transforms the world to the camera's local space.
-  std::cout << "Origin: ";
-  vector_print(_origin);
-  std::cout << "X axis: ";
-  vector_print(_x_axis);
-  std::cout << "Y axis: ";
-  vector_print(_y_axis);
-  std::cout << "Z axis: ";
-  vector_print(_z_axis);
   return TransformGenerator::look_at_matrix(
       glm::vec3(_origin), glm::vec3(_origin - _z_axis), glm::vec3(_y_axis));
 }
@@ -63,7 +57,6 @@ void Transform::rotateFPS(float xoffset, float yoffset, bool constrain_pitch) {
 }
 
 void Transform::rotate_global_y(float angle_deg) {
-  // Look left and right
   glm::mat4 rot = TransformGenerator::rotate_3D(glm::vec3(0.0F, 1.0F, 0.0F), angle_deg);
 
   _x_axis = rot * _x_axis;
@@ -76,8 +69,7 @@ void Transform::rotate_global_y(float angle_deg) {
 }
 
 void Transform::rotate_local_x(float angle_deg) {
-  // Look up and down
-  glm::mat4 rot = TransformGenerator::rotate_3D(_x_axis, angle_deg);
+  glm::mat4 rot = TransformGenerator::rotate_3D(glm::vec3(_x_axis), angle_deg);
 
   _y_axis = rot * _y_axis;
   _z_axis = rot * _z_axis;

@@ -5,6 +5,8 @@
 #include "Graphics.h"
 #include "infra/InputManager.h"
 #include "infra/ResourceManager.h"
+#include "math/BezierBuilder.h"
+#include "render/Curve.h"
 #include "render/Renderer.h"
 
 static int32 width = 500;
@@ -21,6 +23,7 @@ int main(int argc, char *argv[]) {
       eng::input::framebuffer_size_callback);
   eng::Graphics::register_keyboard_press_method(eng::input::keyboard_press_callback);
   eng::Graphics::register_cursor_position_method(eng::input::cursor_position_callback);
+  eng::Graphics::register_mouse_click_method(eng::input::mouse_button_callback);
   eng::Graphics::register_polling_method(eng::input::poll_events);
 
   eng::Renderer renderer;
@@ -47,7 +50,6 @@ int main(int argc, char *argv[]) {
   eng::input::register_movable(camera);
 
   // Kocka
-  // auto model = eng::ResourceManager::get_model("glava/glava.obj");
   auto model = eng::ResourceManager::get_model("kocka.obj");
 
   // Kocka 1
@@ -62,6 +64,20 @@ int main(int argc, char *argv[]) {
   obj2->set_scale({0.5F, 0.5F, 0.5F});
   renderer.register_object(obj2);
 
+  // Bezier builder
+  auto bezier_builder = std::make_shared<eng::BezierBuilder>();
+  eng::input::register_bezier_builder(bezier_builder);
+  auto bezier_object = std::make_shared<eng::Object>(default_shader);
+  auto control_curve = std::make_shared<eng::Curve>(bezier_builder->build_control());
+  auto approx_curve = std::make_shared<eng::Curve>(bezier_builder->build_approximate());
+  auto interp_curve = std::make_shared<eng::Curve>(bezier_builder->build_interpolate());
+
+  bezier_object->add_renderable(control_curve);
+  bezier_object->add_renderable(approx_curve);
+  bezier_object->add_renderable(interp_curve);
+  bezier_object->use_uniform_color(false);
+  renderer.register_object(bezier_object);
+
   // glEnable(GL_DEPTH_TEST);
   // glDepthFunc(GL_LESS);
   glfwSwapInterval(0);
@@ -69,6 +85,12 @@ int main(int argc, char *argv[]) {
   while (!eng::Graphics::should_close()) {
     auto deltaTime = (float)FPSManagerObject.enforceFPS(false);
     eng::Graphics::start_frame(deltaTime);
+    if (eng::input::bezier_control_point_added()) {
+      std::cout << "Control point added" << std::endl;
+      control_curve->update_vertices(bezier_builder->build_control());
+      approx_curve->update_vertices(bezier_builder->build_approximate());
+      interp_curve->update_vertices(bezier_builder->build_interpolate());
+    }
     renderer.render();
 
     eng::Graphics::end_frame();

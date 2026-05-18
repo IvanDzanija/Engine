@@ -8,6 +8,7 @@ namespace eng {
 class Renderable {
  public:
   virtual ~Renderable() = default;
+  virtual void set_draw_mode(GLenum mode) { _draw_mode = mode; }
   virtual void draw() const = 0;
 
   Renderable() = default;
@@ -24,6 +25,7 @@ class Renderable {
 
  protected:
   GLuint _vao = 0;
+  GLenum _draw_mode = GL_TRIANGLES;
 };
 }  // namespace eng
 

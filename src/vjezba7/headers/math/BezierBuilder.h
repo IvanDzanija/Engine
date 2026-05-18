@@ -34,6 +34,9 @@ class BezierBuilder {
       size_t num_segments = 100) const;
   [[nodiscard]] std::vector<CurveVertex> build_interpolate(
       size_t num_segments = 100) const;
+  [[nodiscard]] std::vector<CurveVertex> forward_to_gpu() const;
+  [[nodiscard]] std::vector<CurveVertex> build_full_interpolate(
+      size_t num_segments = 100) const;
 
  private:
   std::vector<glm::vec3> _control_points;

@@ -65,8 +65,6 @@ void Graphics::apply_clear_color() const {
   glClearColor(_clear_color.x, _clear_color.y, _clear_color.z, 1.0F);
 }
 
-// void Graphics::clear_window() { glClear(GL_COLOR_BUFFER_BIT); }
-
 void Graphics::start_frame(float delta_time) {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glfwPollEvents();
@@ -121,7 +119,6 @@ int32 Graphics::register_polling_method(void (*polling_method_user)(float)) {
 // ----------------------------------
 // CALLBACKS
 // -------------------------------
-// ---
 void Graphics::_mouse_button_callback(GLFWwindow *window, int32 button, int32 action,
                                       int32 mods) {
   double xpos = 0.0;

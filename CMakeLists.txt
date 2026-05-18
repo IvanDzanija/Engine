@@ -77,6 +77,8 @@ function(irg_add_app target_name)
         "${dependencies_dir}/glfw/include"
         "${dependencies_dir}/glm"
         "${dependencies_dir}/stb"
+        "${dependencies_dir}/eigen"
+        "${dependencies_dir}/armadillo/include"
     )
 
     target_compile_definitions(${target_name} PRIVATE
@@ -92,6 +94,7 @@ function(irg_add_app target_name)
             "-framework Cocoa"
             "-framework IOKit"
             "-framework CoreVideo"
+            "-framework Accelerate"
         )
         target_compile_options(${target_name} PRIVATE -Wall -Wextra -Wpedantic)
     else()

@@ -54,7 +54,7 @@ Curve::~Curve() {
 // ----------------------------------
 void Curve::draw() const {
   glBindVertexArray(_vao);
-  glDrawArrays(GL_LINE_STRIP, 0, _vertices.size());
+  glDrawArrays(_draw_mode, 0, _vertices.size());
   glBindVertexArray(0);
 }
 
@@ -72,6 +72,7 @@ void Curve::update_vertices(std::vector<CurveVertex> &&vertices) {
 // PRIVATE METHODS
 // ----------------------------------
 void Curve::_setup_curve() {
+  _draw_mode = GL_LINE_STRIP;
   glGenVertexArrays(1, &_vao);
   glGenBuffers(1, &_vbo);
 

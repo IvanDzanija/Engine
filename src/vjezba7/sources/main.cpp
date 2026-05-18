@@ -31,9 +31,10 @@ int main(int argc, char *argv[]) {
 
   // One shader to rule them all
   auto default_shader = eng::ResourceManager::get_shader("shader");
+  auto bezier_shader =
+      eng::ResourceManager::get_shader("bezier", "bezier", "bezier", "bezier");
   auto kocka1_shader = eng::ResourceManager::get_shader(
       "kocka1", "projection_culling", "projection_culling", "projection_culling");
-
   auto kocka2_shader = eng::ResourceManager::get_shader(
       "kocka2", "scene_culling", "scene_culling", "scene_culling");
 
@@ -67,29 +68,37 @@ int main(int argc, char *argv[]) {
   // Bezier builder
   auto bezier_builder = std::make_shared<eng::BezierBuilder>();
   eng::input::register_bezier_builder(bezier_builder);
-  auto bezier_object = std::make_shared<eng::Object>(default_shader);
+  auto bezier_object1 = std::make_shared<eng::Object>(default_shader);
+  auto bezier_object2 = std::make_shared<eng::Object>(bezier_shader);
+
   auto control_curve = std::make_shared<eng::Curve>(bezier_builder->build_control());
-  auto approx_curve = std::make_shared<eng::Curve>(bezier_builder->build_approximate());
-  auto interp_curve = std::make_shared<eng::Curve>(bezier_builder->build_interpolate());
+  // auto approx_curve =
+  // std::make_shared<eng::Curve>(bezier_builder->build_approximate());
+  auto approx_curve = std::make_shared<eng::Curve>(bezier_builder->forward_to_gpu());
+  approx_curve->set_draw_mode(GL_LINES_ADJACENCY);
+  auto interp_curve =
+      std::make_shared<eng::Curve>(bezier_builder->build_full_interpolate());
 
-  bezier_object->add_renderable(control_curve);
-  bezier_object->add_renderable(approx_curve);
-  bezier_object->add_renderable(interp_curve);
-  bezier_object->use_uniform_color(false);
-  renderer.register_object(bezier_object);
+  bezier_object1->add_renderable(control_curve);
+  bezier_object1->add_renderable(interp_curve);
+  bezier_object2->add_renderable(approx_curve);
+  bezier_object1->use_uniform_color(false);
+  bezier_object2->use_uniform_color(false);
+  renderer.register_object(bezier_object1);
+  renderer.register_object(bezier_object2);
 
-  // glEnable(GL_DEPTH_TEST);
-  // glDepthFunc(GL_LESS);
+  glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LESS);
   glfwSwapInterval(0);
-
   while (!eng::Graphics::should_close()) {
     auto deltaTime = (float)FPSManagerObject.enforceFPS(false);
     eng::Graphics::start_frame(deltaTime);
     if (eng::input::bezier_control_point_added()) {
       std::cout << "Control point added" << std::endl;
       control_curve->update_vertices(bezier_builder->build_control());
-      approx_curve->update_vertices(bezier_builder->build_approximate());
-      interp_curve->update_vertices(bezier_builder->build_interpolate());
+      // approx_curve->update_vertices(bezier_builder->build_approximate());
+      approx_curve->update_vertices(bezier_builder->forward_to_gpu());
+      interp_curve->update_vertices(bezier_builder->build_full_interpolate());
     }
     renderer.render();
 

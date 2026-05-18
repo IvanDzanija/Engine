@@ -18,3 +18,9 @@
 	path = dependencies/stb
 	url = https://github.com/nothings/stb.git
 	branch = master
+[submodule "dependencies/eigen"]
+	path = dependencies/eigen
+	url = https://gitlab.com/libeigen/eigen
+[submodule "dependencies/armadillo"]
+	path = dependencies/armadillo
+	url = https://gitlab.com/conradsnicta/armadillo-code.git

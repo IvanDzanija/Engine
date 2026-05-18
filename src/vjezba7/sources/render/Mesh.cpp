@@ -81,7 +81,7 @@ Mesh::~Mesh() {
 void Mesh::draw() const {
   glBindVertexArray(_vao);
   glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-  glDrawElements(GL_TRIANGLES, _indices.size(), GL_UNSIGNED_INT, nullptr);
+  glDrawElements(_draw_mode, _indices.size(), GL_UNSIGNED_INT, nullptr);
   glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glBindVertexArray(0);
 }
@@ -115,6 +115,7 @@ void Mesh::apply_transform(const glm::mat4 &matrix) {
 // PRIVATE METHODS
 // ----------------------------------
 void Mesh::_setup_mesh() {
+  _draw_mode = GL_TRIANGLES;
   glGenVertexArrays(1, &_vao);
   glGenBuffers(1, &_vbo);
   glGenBuffers(1, &_ebo);

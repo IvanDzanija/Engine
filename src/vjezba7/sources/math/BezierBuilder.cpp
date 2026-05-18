@@ -1,5 +1,7 @@
 #include "math/BezierBuilder.h"
 
+#include <armadillo>
+
 namespace eng {
 // ----------------------------------
 // GETTERS & SETTERS
@@ -32,14 +34,15 @@ void BezierBuilder::clear_control_points() { _control_points.clear(); }
   }
   return vertices;
 }
+
 [[nodiscard]] std::vector<CurveVertex> BezierBuilder::build_approximate(
     size_t num_segments) const {
   if (_control_points.empty()) {
     return {{}};
   }
 
-  auto binomial_coefficients =
-      _precalculate_binomial_coefficients(_control_points.size() - 1);
+  size_t n = _control_points.size() - 1;
+  auto binomial_coefficients = _precalculate_binomial_coefficients(n);
   glm::vec3 color = {1.0F, 0.0F, 1.0F};
 
   std::vector<CurveVertex> vertices;
@@ -49,8 +52,7 @@ void BezierBuilder::clear_control_points() { _control_points.clear(); }
 
   for (size_t i = 0; i <= num_segments; ++i) {
     glm::vec3 point(0.0F);
-    size_t n = _control_points.size() - 1;
-    float t = i * delta;
+    const float t = i * delta;
     for (size_t j = 0; j <= n; ++j) {
       float coeff = binomial_coefficients[j] * std::pow(t, j) * std::pow(1 - t, n - j);
       point += coeff * _control_points[j];
@@ -94,13 +96,82 @@ void BezierBuilder::clear_control_points() { _control_points.clear(); }
   float delta = 1.0F / num_segments;
 
   for (size_t i = 0; i <= num_segments; ++i) {
-    float t = i * delta;
+    const float t = i * delta;
 
     glm::vec3 point = (a0) +
                       (((3 * t) - (3 * std::pow(t, 2.F)) + (std::pow(t, 3.F))) * a1) +
                       (((3 * std::pow(t, 2.F)) - (2 * std::pow(t, 3.F))) * a2) +
                       (std::pow(t, 3.F) * a3);
 
+    vertices.emplace_back(point, color);
+  }
+
+  return vertices;
+}
+
+[[nodiscard]] std::vector<CurveVertex> BezierBuilder::forward_to_gpu() const {
+  if (_control_points.size() < 4) {
+    return {{}};
+  }
+  glm::vec3 color = {1.0F, 0.0F, 1.0F};
+  size_t n = _control_points.size();
+
+  std::vector<CurveVertex> vertices(n + 1);
+  for (size_t i = 0; i + 3 < n; i += 3) {
+    vertices.emplace_back(_control_points[i], color);
+    vertices.emplace_back(_control_points[i + 1], color);
+    vertices.emplace_back(_control_points[i + 2], color);
+    vertices.emplace_back(_control_points[i + 3], color);
+  }
+  return vertices;
+}
+
+[[nodiscard]] std::vector<CurveVertex> BezierBuilder::build_full_interpolate(
+    size_t num_segments) const {
+  const size_t n = _control_points.size();
+  if (n < 2) {
+    return {{}};
+  }
+
+  const size_t degree = n - 1;
+  auto binomial_coefficients =
+      _precalculate_binomial_coefficients(_control_points.size() - 1);
+
+  float delta = 1.0F / degree;
+  arma::mat M(n, n);
+  for (size_t i = 0; i < n; ++i) {
+    float t = i * delta;
+    for (size_t j = 0; j < n; ++j) {
+      M(i, j) = binomial_coefficients[j] * std::pow(t, j) * std::pow(1 - t, degree - j);
+    }
+  }
+
+  arma::mat P(n, 3);
+  for (size_t i = 0; i < n; ++i) {
+    P(i, 0) = _control_points[i].x;
+    P(i, 1) = _control_points[i].y;
+    P(i, 2) = _control_points[i].z;
+  }
+
+  const arma::mat R = arma::solve(M, P);
+  std::vector<glm::vec3> control_vectors(n);
+  for (size_t j = 0; j < n; ++j) {
+    control_vectors[j] = {R(j, 0), R(j, 1), R(j, 2)};
+  }
+
+  const glm::vec3 color = {0.0F, 0.0F, 1.0F};
+  std::vector<CurveVertex> vertices;
+  vertices.reserve(num_segments + 1);
+  delta = 1.0F / num_segments;
+
+  for (size_t i = 0; i <= num_segments; ++i) {
+    glm::vec3 point(0.0F);
+    const float t = i * delta;
+    for (size_t j = 0; j < n; ++j) {
+      float coeff =
+          binomial_coefficients[j] * std::pow(t, j) * std::pow(1 - t, degree - j);
+      point += coeff * control_vectors[j];
+    }
     vertices.emplace_back(point, color);
   }
 

@@ -9,7 +9,6 @@
 #include "math/Transform.h"
 
 extern eng::AppState app_state;
-
 namespace eng::input {
 // Curve pathing controll
 struct CurveControl {
@@ -28,11 +27,25 @@ static std::shared_ptr<BezierBuilder> _bezier_builder = nullptr;
 static CurveControl curve_control;
 
 void _camera_forward() {
-  _target->set_position(curve_control.vertices[curve_control.index].coords);
+  auto curr_pos = curve_control.vertices[curve_control.index].coords;
+  _target->set_position(curr_pos);
+
+  if (curve_control.index > 0) {
+    auto next_pos = curve_control.vertices[curve_control.index - 1].coords;
+    _target->change_orientation(next_pos, glm::vec3(0.0F, 1.0F, 0.0F));
+  }
+
   --curve_control.index;
 }
 void _camera_backward() {
-  _target->set_position(curve_control.vertices[curve_control.index].coords);
+  auto curr_pos = curve_control.vertices[curve_control.index].coords;
+  _target->set_position(curr_pos);
+
+  if (curve_control.index < curve_control.vertices.size() - 1) {
+    auto next_pos = curve_control.vertices[curve_control.index + 1].coords;
+    _target->change_orientation(next_pos, glm::vec3(0.0F, 1.0F, 0.0F));
+  }
+
   ++curve_control.index;
 }
 
@@ -143,6 +156,10 @@ void poll_events(float deltaTime) {
     if (curve_control.first_space) {
       // On click move forward
       curve_control.vertices = _bezier_builder->build_interpolate(5000);
+      if (curve_control.vertices.empty()) {
+        std::println("No control points added yet.");
+        return;
+      }
       curve_control.first_space = false;
       curve_control.forward = true;
       curve_control.index = curve_control.vertices.size() - 1;

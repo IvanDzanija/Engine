@@ -18,13 +18,27 @@ void Renderer::link_camera(std::shared_ptr<Camera> camera) {
 }
 void Renderer::unlink_camera() { _camera.reset(); }
 
+void Renderer::register_light_source(std::shared_ptr<Light> light) {
+  _light = std::move(light);
+}
+void Renderer::unregister_light_source(const std::shared_ptr<Light> &light) {
+  if (_light == light) {
+    _light.reset();
+  }
+}
+
 void Renderer::render() {
   if (_camera == nullptr) {
     std::cerr << "ERROR: Renderer cannot render without a linked camera." << std::endl;
     return;
   }
+  if (_light == nullptr) {
+    std::cerr << "ERROR: Renderer cannot render without a registered light source."
+              << std::endl;
+    return;
+  }
   for (const auto &obj : _objects) {
-    obj->render(_camera->perspective_matrix(), _camera->view_matrix(),
+    obj->render(_camera->perspective_matrix(), _camera->view_matrix(), _light,
                 _camera->get_position());
   }
 }

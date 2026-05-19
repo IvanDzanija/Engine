@@ -190,8 +190,6 @@ if(MSVC AND TARGET assimp)
     target_compile_options(assimp PRIVATE /WX-)
 endif()
 
-add_subdirectory(src/primjerOpenGL)
-add_subdirectory(src/primjerASSIMP)
 add_subdirectory(examples)
 
 add_subdirectory(src/vjezba1)

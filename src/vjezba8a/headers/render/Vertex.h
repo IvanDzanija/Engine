@@ -6,9 +6,9 @@
 
 namespace eng {
 struct Vertex {
-  glm::vec3 coords;
-  glm::vec3 normal;
-  glm::vec2 tex_coords;
+  glm::vec3 coords = glm::vec3(0.0F);
+  glm::vec3 normal = glm::vec3(0.0F);
+  glm::vec2 tex_coords = glm::vec2(0.0F);
 
   Vertex() = default;
   Vertex(const glm::vec3 &coords, const glm::vec3 &normal, const glm::vec2 &tex_coords)

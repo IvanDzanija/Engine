@@ -52,18 +52,25 @@ int main(int argc, char *argv[]) {
   auto light = std::make_shared<eng::Light>();
   light->set_position({1.0F, 0.0F, 1.0F});
   renderer.register_light_source(light);
+  auto light_model = eng::ResourceManager::get_model("bird.obj");
+  auto light_object = std::make_shared<eng::Object>(light_model, light_shader);
+  light_object->set_position(light->get_position());
+  light_object->set_scale({0.2F, 0.2F, 0.2F});
+  renderer.register_object(light_object);
+  // eng::input::register_movable(light);
 
   // Kocka
-  std::shared_ptr<eng::Model> model = eng::ResourceManager::get_model("kocka.obj");
+  std::shared_ptr<eng::Model> model =
+      eng::ResourceManager::get_model("glava/glava.obj");
 
   // Kocka 1
-  auto obj1 = std::make_shared<eng::Object>(model, default_shader);
+  auto obj1 = std::make_shared<eng::Object>(model, light_shader);
   obj1->set_position({-1.5F, 0.0F, 0.0F});
   renderer.register_object(obj1);
   // eng::input::register_movable(obj1);
 
   // Kocka 2
-  auto obj2 = std::make_shared<eng::Object>(model, default_shader);
+  auto obj2 = std::make_shared<eng::Object>(model, light_shader);
   obj2->set_position({1.5F, 0.0F, 0.0F});
   obj2->set_scale({0.5F, 0.5F, 0.5F});
   renderer.register_object(obj2);

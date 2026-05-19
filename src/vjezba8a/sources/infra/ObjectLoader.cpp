@@ -12,8 +12,7 @@ namespace eng {
 // METHODS
 // ----------------------------------
 Model ObjectLoader::load_model(const std::string &name) {
-  static std::string path =
-      std::filesystem::current_path().string() + RESOURCES_DIR + name;
+  std::string path = std::filesystem::current_path().string() + RESOURCES_DIR + name;
 
   const aiScene *scene = get_importer().ReadFile(
       path.c_str(), aiProcess_CalcTangentSpace | aiProcess_Triangulate |

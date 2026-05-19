@@ -38,7 +38,9 @@ void BezierBuilder::clear_control_points() { _control_points.clear(); }
 [[nodiscard]] std::vector<CurveVertex> BezierBuilder::build_approximate(
     size_t num_segments) const {
   if (_control_points.empty()) {
-    return {{}};
+    std::cerr << "ERROR: No control points provided for Bezier curve approximation."
+              << std::endl;
+    return {};
   }
 
   size_t n = _control_points.size() - 1;
@@ -65,7 +67,10 @@ void BezierBuilder::clear_control_points() { _control_points.clear(); }
 [[nodiscard]] std::vector<CurveVertex> BezierBuilder::build_interpolate(
     size_t num_segments) const {
   if (_control_points.size() < 4) {
-    return {{}};
+    std::cerr << "ERROR: At least 4 control points are required for cubic Bezier "
+                 "interpolation."
+              << std::endl;
+    return {};
   }
   size_t n = _control_points.size();
   glm::vec3 p0 = _control_points[n - 4];

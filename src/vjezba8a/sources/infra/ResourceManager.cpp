@@ -32,6 +32,9 @@ std::shared_ptr<Model> ResourceManager::get_model(const std::string &name) {
   }
 
   _models[name] = std::make_shared<Model>(ObjectLoader::load_model(name));
+  for (auto x : _models) {
+    std::cout << x.first << std::endl;
+  }
   return _models[name];
 }
 

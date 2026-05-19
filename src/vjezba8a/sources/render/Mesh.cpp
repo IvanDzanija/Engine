@@ -80,9 +80,7 @@ Mesh::~Mesh() {
 // ----------------------------------
 void Mesh::draw() const {
   glBindVertexArray(_vao);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   glDrawElements(_draw_mode, _indices.size(), GL_UNSIGNED_INT, nullptr);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glBindVertexArray(0);
 }
 

@@ -10,22 +10,22 @@ Object::Object(const std::shared_ptr<Model> &model, std::shared_ptr<Shader> shad
   for (const auto &mesh_ptr : model->meshes) {
     _renderables.push_back(mesh_ptr);
   }
-  if (!model->materials.empty()) {
-    _material = model->materials[0];
+  for (const auto &material_ptr : model->materials) {
+    _materials.push_back(material_ptr);
   }
 }
 
 // Copy constructors
 Object::Object(const Object &other)
     : _renderables(other._renderables),
-      _material(other._material),
+      _materials(other._materials),
       _shader(other._shader),
       _use_uniform_color(other._use_uniform_color) {}
 
 Object &Object::operator=(const Object &other) {
   if (this != &other) {
     _renderables = other._renderables;
-    _material = other._material;
+    _materials = other._materials;
     _shader = other._shader;
     _use_uniform_color = other._use_uniform_color;
   }
@@ -34,14 +34,14 @@ Object &Object::operator=(const Object &other) {
 // Move constructors
 Object::Object(Object &&other) noexcept
     : _renderables(std::move(other._renderables)),
-      _material(std::move(other._material)),
+      _materials(std::move(other._materials)),
       _shader(std::move(other._shader)),
       _use_uniform_color(other._use_uniform_color) {}
 
 Object &Object::operator=(Object &&other) noexcept {
   if (this != &other) {
     _renderables = std::move(other._renderables);
-    _material = std::move(other._material);
+    _materials = std::move(other._materials);
     _shader = std::move(other._shader);
     _use_uniform_color = other._use_uniform_color;
   }
@@ -83,18 +83,23 @@ void Object::render(const glm::mat4 &projection_matrix, const glm::mat4 &view_ma
     _shader->set_uniform("u_use_vertex_color", true);
   }
 
-  if (_material != nullptr) {
-    _shader->set_uniform("u_material.ambient", _material->get_ambient());
-    _shader->set_uniform("u_material.diffuse", _material->get_diffuse());
-    _shader->set_uniform("u_material.specular", _material->get_specular());
-    _shader->set_uniform("u_material.shininess", _material->get_shininess());
-  }
-
   _shader->set_uniform("u_light.position", light->get_position());
   _shader->set_uniform("u_light.intensity", light->get_intensity());
   _shader->set_uniform("u_light.ambient", light->get_ambient());
 
   for (const auto &renderable : _renderables) {
+    if (_materials.size() > 0 && renderable->get_type() == RenderableType::MESH) {
+      const auto &mesh = static_cast<Mesh *>(renderable.get());
+      if (mesh->get_material_index() >= _materials.size()) {
+        std::cerr << "ERROR: Mesh material index is out of bounds!" << std::endl;
+        continue;
+      }
+      const auto &material = _materials[mesh->get_material_index()];
+      _shader->set_uniform("u_material.ambient", material->get_ambient());
+      _shader->set_uniform("u_material.diffuse", material->get_diffuse());
+      _shader->set_uniform("u_material.specular", material->get_specular());
+      _shader->set_uniform("u_material.shininess", material->get_shininess());
+    }
     renderable->draw();
   }
 

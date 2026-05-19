@@ -31,9 +31,6 @@ class Object : public Transform {
   // ----------------------------------
   // GETTERS & SETTERS
   // ----------------------------------
-  void set_material(std::shared_ptr<Material> material) {
-    _material = std::move(material);
-  }
   void set_texture(std::shared_ptr<Texture> texture) { _texture = std::move(texture); }
   void set_shader(std::shared_ptr<Shader> shader) { _shader = std::move(shader); }
   void use_uniform_color(bool use_uniform) { _use_uniform_color = use_uniform; }
@@ -49,7 +46,7 @@ class Object : public Transform {
 
  private:
   std::vector<std::shared_ptr<Renderable>> _renderables;
-  std::shared_ptr<Material> _material;
+  std::vector<std::shared_ptr<Material>> _materials;
   std::shared_ptr<Texture> _texture;
   std::shared_ptr<Shader> _shader;
   Axis _local_axis;

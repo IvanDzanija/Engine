@@ -3,6 +3,7 @@ layout(triangles) in;
 layout(triangle_strip, max_vertices = 3) out;
 
 in vec3 world_pos[];
+in vec3 color[];
 out vec3 frag_color;
 
 struct Light {

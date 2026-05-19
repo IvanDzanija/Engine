@@ -36,8 +36,9 @@ class ObjectLoader {
   // PRIVATE METHODS
   // ----------------------------------
   static void _process_node(aiNode *node, const aiScene *scene,
-                            std::vector<std::shared_ptr<Mesh>> &meshes,
-                            std::vector<std::shared_ptr<Material>> &materials);
+                            std::vector<std::shared_ptr<Mesh>> &meshes);
+  static void _process_materials(const aiScene *scene,
+                                 std::vector<std::shared_ptr<Material>> &materials);
   static Mesh _process_mesh(aiMesh *mesh);
   static Material _process_material(aiMaterial *material);
 

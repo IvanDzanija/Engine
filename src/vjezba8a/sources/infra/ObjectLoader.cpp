@@ -31,7 +31,8 @@ Model ObjectLoader::load_model(const std::string &name) {
 
   std::vector<std::shared_ptr<Mesh>> meshes;
   std::vector<std::shared_ptr<Material>> materials;
-  _process_node(scene->mRootNode, scene, meshes, materials);
+  _process_node(scene->mRootNode, scene, meshes);
+  _process_materials(scene, materials);
   _normalize(meshes);
 
   return {.meshes = std::move(meshes), .materials = std::move(materials)};
@@ -41,18 +42,21 @@ Model ObjectLoader::load_model(const std::string &name) {
 // PRIVATE METHODS
 // ----------------------------------
 void ObjectLoader::_process_node(aiNode *node, const aiScene *scene,
-                                 std::vector<std::shared_ptr<Mesh>> &meshes,
-                                 std::vector<std::shared_ptr<Material>> &materials) {
+                                 std::vector<std::shared_ptr<Mesh>> &meshes) {
   for (size_t i = 0; i < node->mNumMeshes; ++i) {
     aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-    meshes.push_back(std::make_shared<Mesh>(_process_mesh(mesh)));
-  }
-  for (size_t i = 0; i < scene->mNumMaterials; ++i) {
-    aiMaterial *material = scene->mMaterials[i];
-    materials.push_back(std::make_shared<Material>(_process_material(material)));
+    meshes.emplace_back(std::make_shared<Mesh>(_process_mesh(mesh)));
   }
   for (size_t i = 0; i < node->mNumChildren; ++i) {
-    _process_node(node->mChildren[i], scene, meshes, materials);
+    _process_node(node->mChildren[i], scene, meshes);
+  }
+}
+
+void ObjectLoader::_process_materials(
+    const aiScene *scene, std::vector<std::shared_ptr<Material>> &materials) {
+  for (size_t i = 0; i < scene->mNumMaterials; ++i) {
+    aiMaterial *material = scene->mMaterials[i];
+    materials.emplace_back(std::make_shared<Material>(_process_material(material)));
   }
 }
 
@@ -93,7 +97,8 @@ Mesh ObjectLoader::_process_mesh(aiMesh *mesh) {
       indices.push_back(face.mIndices[j]);
     }
   }
-  return {vertices, indices, textures};
+  uint32 material_index = mesh->mMaterialIndex;
+  return {vertices, indices, textures, material_index};
 }
 
 Material ObjectLoader::_process_material(aiMaterial *material) {

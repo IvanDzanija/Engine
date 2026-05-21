@@ -1,5 +1,7 @@
 #include "render/Axis.h"
 
+#include "render/Renderable.h"
+
 namespace eng {
 
 // ----------------------------------
@@ -41,5 +43,7 @@ void Axis::draw() const {
   glBindVertexArray(0);
   glEnable(GL_DEPTH_TEST);
 }
+
+RenderableType Axis::get_type() const { return RenderableType::AXIS; }
 
 }  // namespace eng

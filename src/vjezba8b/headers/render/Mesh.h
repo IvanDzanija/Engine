@@ -21,10 +21,10 @@ class Mesh : public Renderable {
   // ----------------------------------
   // Copy constructor
   Mesh(const std::vector<Vertex> &vertices, const std::vector<uint32> &indices,
-       const std::vector<Texture> &textures);
+       const std::vector<Texture> &textures, uint32 material_index);
   // Move constructor
   Mesh(std::vector<Vertex> &&vertices, std::vector<uint32> &&indices,
-       std::vector<Texture> &&textures);
+       std::vector<Texture> &&textures, uint32 material_index);
 
   // Rule of 5
   Mesh(const Mesh &other) = delete;
@@ -39,12 +39,13 @@ class Mesh : public Renderable {
   [[nodiscard]] const std::vector<Vertex> &get_vertices() const noexcept;
   [[nodiscard]] const std::vector<uint32> &get_indices() const noexcept;
   [[nodiscard]] const std::vector<Texture> &get_textures() const noexcept;
+  [[nodiscard]] uint32 get_material_index() const noexcept;
 
   // ----------------------------------
   // METHODS
   // ----------------------------------
   void draw() const override;
-
+  [[nodiscard]] RenderableType get_type() const override;
   [[nodiscard]] BoundingBox get_bounding_box() const;
 
   void apply_transform(const glm::mat4 &matrix);
@@ -56,6 +57,7 @@ class Mesh : public Renderable {
   std::vector<Vertex> _vertices;
   std::vector<uint32> _indices;
   std::vector<Texture> _textures;
+  uint32 _material_index = 0;
   GLuint _vbo = 0;
   GLuint _ebo = 0;
 

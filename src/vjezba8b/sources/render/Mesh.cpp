@@ -6,16 +6,20 @@ namespace eng {
 // ----------------------------------
 // Copy constructor
 Mesh::Mesh(const std::vector<Vertex> &vertices, const std::vector<uint32> &indices,
-           const std::vector<Texture> &textures)
-    : _vertices(vertices), _indices(indices), _textures(textures) {
+           const std::vector<Texture> &textures, uint32 material_index)
+    : _vertices(vertices),
+      _indices(indices),
+      _textures(textures),
+      _material_index(material_index) {
   _setup_mesh();
 }
 // Move constructor
 Mesh::Mesh(std::vector<Vertex> &&vertices, std::vector<uint32> &&indices,
-           std::vector<Texture> &&textures)
+           std::vector<Texture> &&textures, uint32 material_index)
     : _vertices(std::move(vertices)),
       _indices(std::move(indices)),
-      _textures(std::move(textures)) {
+      _textures(std::move(textures)),
+      _material_index(material_index) {
   _setup_mesh();
 }
 
@@ -24,6 +28,7 @@ Mesh::Mesh(Mesh &&other) noexcept
     : _vertices(std::move(other._vertices)),
       _indices(std::move(other._indices)),
       _textures(std::move(other._textures)),
+      _material_index(other._material_index),
       _vbo(other._vbo),
       _ebo(other._ebo) {
   _vao = other._vao;
@@ -44,11 +49,13 @@ Mesh &Mesh::operator=(Mesh &&other) noexcept {
     _vertices = std::move(other._vertices);
     _indices = std::move(other._indices);
     _textures = std::move(other._textures);
+    _material_index = other._material_index;
     _vao = other._vao;
     _vbo = other._vbo;
     _ebo = other._ebo;
 
     // Reset source
+    other._material_index = 0;
     other._vao = 0;
     other._vbo = 0;
     other._ebo = 0;
@@ -74,17 +81,20 @@ Mesh::~Mesh() {
 [[nodiscard]] const std::vector<Texture> &Mesh::get_textures() const noexcept {
   return _textures;
 }
+[[nodiscard]] uint32 Mesh::get_material_index() const noexcept {
+  return _material_index;
+}
 
 // ----------------------------------
 // METHODS
 // ----------------------------------
 void Mesh::draw() const {
   glBindVertexArray(_vao);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   glDrawElements(_draw_mode, _indices.size(), GL_UNSIGNED_INT, nullptr);
-  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
   glBindVertexArray(0);
 }
+
+RenderableType Mesh::get_type() const { return RenderableType::MESH; }
 
 BoundingBox Mesh::get_bounding_box() const {
   glm::vec3 vmin = _vertices[0].coords;

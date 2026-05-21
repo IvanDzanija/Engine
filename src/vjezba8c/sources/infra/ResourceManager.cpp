@@ -1,5 +1,7 @@
 #include "infra/ResourceManager.h"
 
+#include "infra/ObjectLoader.h"
+
 namespace eng {
 std::shared_ptr<Shader> ResourceManager::get_shader(const std::string &name) {
   if (_shaders.contains(name)) {
@@ -24,24 +26,13 @@ std::shared_ptr<Shader> ResourceManager::get_shader(const std::string &name,
   return shader;
 }
 
-std::vector<std::shared_ptr<Renderable>> ResourceManager::get_model(
-    const std::string &name) {
+std::shared_ptr<Model> ResourceManager::get_model(const std::string &name) {
   if (_models.contains(name)) {
     return _models[name];
   }
 
-  std::vector<eng::Mesh> raw_meshes = ObjectLoader::load_model(name);
-
-  // TODO: Possibly faster with emplace_back and move semantics or RAII
-  std::vector<std::shared_ptr<Renderable>> renderables;
-  renderables.reserve(raw_meshes.size());
-
-  for (auto &mesh : raw_meshes) {
-    renderables.push_back(std::make_shared<Mesh>(std::move(mesh)));
-  }
-
-  _models[name] = renderables;
-  return renderables;
+  _models[name] = std::make_shared<Model>(ObjectLoader::load_model(name));
+  return _models[name];
 }
 
 }  // namespace eng

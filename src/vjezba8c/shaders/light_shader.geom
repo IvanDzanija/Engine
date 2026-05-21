@@ -33,7 +33,7 @@ void main() {
 
   vec3 L = normalize(u_light.position - center);
   vec3 V = normalize(u_eye_pos - center);
-  vec3 R = normalize(reflect(-L, normal));
+  vec3 R = reflect(-L, normal);
 
   // Ambient
   vec3 ambient = u_light.ambient * u_material.ambient;

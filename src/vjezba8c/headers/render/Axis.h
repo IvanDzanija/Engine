@@ -18,6 +18,7 @@ class Axis : public Renderable {
   // METHODS
   // ----------------------------------
   void draw() const override;
+  [[nodiscard]] RenderableType get_type() const override;
 
  private:
   // ----------------------------------

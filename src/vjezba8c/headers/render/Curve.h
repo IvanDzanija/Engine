@@ -37,6 +37,7 @@ class Curve : public Renderable {
   // METHODS
   // ----------------------------------
   void draw() const override;
+  [[nodiscard]] RenderableType get_type() const override;
   void update_vertices(std::vector<CurveVertex> &&vertices);
 
  private:

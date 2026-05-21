@@ -58,6 +58,8 @@ void Curve::draw() const {
   glBindVertexArray(0);
 }
 
+RenderableType Curve::get_type() const { return RenderableType::CURVE; }
+
 void Curve::update_vertices(std::vector<CurveVertex> &&vertices) {
   _vertices = std::move(vertices);
   glBindBuffer(GL_ARRAY_BUFFER, _vbo);

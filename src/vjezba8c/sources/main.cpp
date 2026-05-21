@@ -33,10 +33,10 @@ int main(int argc, char *argv[]) {
   auto default_shader = eng::ResourceManager::get_shader("shader");
   auto bezier_shader =
       eng::ResourceManager::get_shader("bezier", "bezier", "bezier", "bezier");
-  auto kocka1_shader = eng::ResourceManager::get_shader(
-      "kocka1", "projection_culling", "projection_culling", "projection_culling");
-  auto kocka2_shader = eng::ResourceManager::get_shader(
-      "kocka2", "scene_culling", "scene_culling", "scene_culling");
+  auto light_shader = eng::ResourceManager::get_shader("light_shader", "light_shader",
+                                                       "light_shader", "light_shader");
+  auto gouraud_shader = eng::ResourceManager::get_shader("gouraud");
+  auto phong_shader = eng::ResourceManager::get_shader("phong");
 
   // Global axes
   // auto global_axes = std::make_shared<eng::Object>(default_shader);
@@ -45,25 +45,43 @@ int main(int argc, char *argv[]) {
 
   // Camera
   auto camera = std::make_shared<eng::Camera>();
-  camera->set_position({3.0F, 4.0F, 1.0F});
+  camera->set_position({1.0F, 1.0F, 6.0F});
   camera->change_orientation({0.0F, 0.0F, 0.0F});
   renderer.link_camera(camera);
   eng::input::register_movable(camera);
 
+  // Light
+  auto light = std::make_shared<eng::Light>();
+  light->set_position({-1.5F, 0.0F, 1.5F});
+  renderer.register_light_source(light);
+  auto light_model = eng::ResourceManager::get_model("bird.obj");
+  auto light_object = std::make_shared<eng::Object>(light_model, light_shader);
+  light_object->set_position(light->get_position());
+  light_object->set_scale({0.2F, 0.2F, 0.2F});
+  renderer.register_object(light_object);
+  // eng::input::register_movable(light);
+
   // Kocka
-  auto model = eng::ResourceManager::get_model("kocka.obj");
+  std::shared_ptr<eng::Model> model =
+      eng::ResourceManager::get_model("glava/glava.obj");
 
   // Kocka 1
-  auto obj1 = std::make_shared<eng::Object>(model, kocka1_shader);
+  auto obj1 = std::make_shared<eng::Object>(model, phong_shader);
   obj1->set_position({-1.5F, 0.0F, 0.0F});
   renderer.register_object(obj1);
   // eng::input::register_movable(obj1);
 
   // Kocka 2
-  auto obj2 = std::make_shared<eng::Object>(model, kocka2_shader);
+  auto obj2 = std::make_shared<eng::Object>(model, light_shader);
   obj2->set_position({1.5F, 0.0F, 0.0F});
   obj2->set_scale({0.5F, 0.5F, 0.5F});
   renderer.register_object(obj2);
+
+  // Kocka 3
+  auto obj3 = std::make_shared<eng::Object>(model, gouraud_shader);
+  obj3->set_scale({0.5F, 0.5F, 0.5F});
+  obj3->set_position({0.0F, 0.0F, 0.0F});
+  renderer.register_object(obj3);
 
   // Bezier builder
   auto bezier_builder = std::make_shared<eng::BezierBuilder>();
@@ -91,6 +109,8 @@ int main(int argc, char *argv[]) {
 
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LESS);
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
   glfwSwapInterval(0);
   while (!eng::Graphics::should_close()) {
     auto deltaTime = (float)FPSManagerObject.enforceFPS(false);

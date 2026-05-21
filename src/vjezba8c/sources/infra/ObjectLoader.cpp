@@ -2,6 +2,7 @@
 
 #include <filesystem>
 
+#include "assimp/postprocess.h"
 #include "math/TransformGenerator.h"
 
 #define STB_IMAGE_IMPLEMENTATION
@@ -11,14 +12,13 @@ namespace eng {
 // ----------------------------------
 // METHODS
 // ----------------------------------
-std::vector<Mesh> ObjectLoader::load_model(const std::string &name) {
-  static std::string path =
-      std::filesystem::current_path().string() + RESOURCES_DIR + name;
+Model ObjectLoader::load_model(const std::string &name) {
+  std::string path = std::filesystem::current_path().string() + RESOURCES_DIR + name;
 
   const aiScene *scene = get_importer().ReadFile(
       path.c_str(), aiProcess_CalcTangentSpace | aiProcess_Triangulate |
                         aiProcess_JoinIdenticalVertices | aiProcess_SortByPType |
-                        aiProcess_FlipUVs | aiProcess_GenNormals
+                        aiProcess_FlipUVs | aiProcess_GenSmoothNormals
 
   );
   if (scene == nullptr ||
@@ -30,57 +30,63 @@ std::vector<Mesh> ObjectLoader::load_model(const std::string &name) {
 
   assert(scene->HasMeshes());
 
-  std::vector<Mesh> meshes;
+  std::vector<std::shared_ptr<Mesh>> meshes;
+  std::vector<std::shared_ptr<Material>> materials;
   _process_node(scene->mRootNode, scene, meshes);
+  _process_materials(scene, materials);
   _normalize(meshes);
-  return meshes;
+
+  return {.meshes = std::move(meshes), .materials = std::move(materials)};
 }
 
 // ----------------------------------
 // PRIVATE METHODS
 // ----------------------------------
 void ObjectLoader::_process_node(aiNode *node, const aiScene *scene,
-                                 std::vector<Mesh> &meshes) {
-  for (uint32 i = 0; i < node->mNumMeshes; ++i) {
+                                 std::vector<std::shared_ptr<Mesh>> &meshes) {
+  for (size_t i = 0; i < node->mNumMeshes; ++i) {
     aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-    meshes.push_back(_process_mesh(mesh, scene));
+    meshes.emplace_back(std::make_shared<Mesh>(_process_mesh(mesh)));
   }
-  for (uint32 i = 0; i < node->mNumChildren; i++) {
+  for (size_t i = 0; i < node->mNumChildren; ++i) {
     _process_node(node->mChildren[i], scene, meshes);
   }
 }
 
-Mesh ObjectLoader::_process_mesh(aiMesh *mesh, const aiScene *scene) {
+void ObjectLoader::_process_materials(
+    const aiScene *scene, std::vector<std::shared_ptr<Material>> &materials) {
+  for (size_t i = 0; i < scene->mNumMaterials; ++i) {
+    aiMaterial *material = scene->mMaterials[i];
+    materials.emplace_back(std::make_shared<Material>(_process_material(material)));
+  }
+}
+
+Mesh ObjectLoader::_process_mesh(aiMesh *mesh) {
   // data to fill
   std::vector<Vertex> vertices;
   std::vector<uint32> indices;
   std::vector<Texture> textures;
 
   // Vertices
-  for (uint32 i = 0; i < mesh->mNumVertices; i++) {
+  for (size_t i = 0; i < mesh->mNumVertices; ++i) {
     Vertex vertex;
-    glm::vec3 vec;
 
     // Coords
-    vec.x = mesh->mVertices[i].x;
-    vec.y = mesh->mVertices[i].y;
-    vec.z = mesh->mVertices[i].z;
-    vertex.coords = vec;
+    vertex.coords.x = mesh->mVertices[i].x;
+    vertex.coords.y = mesh->mVertices[i].y;
+    vertex.coords.z = mesh->mVertices[i].z;
     // Normals
     if (mesh->HasNormals()) {
-      vec.x = mesh->mNormals[i].x;
-      vec.y = mesh->mNormals[i].y;
-      vec.z = mesh->mNormals[i].z;
-      vertex.normal = vec;
+      vertex.normal.x = mesh->mNormals[i].x;
+      vertex.normal.y = mesh->mNormals[i].y;
+      vertex.normal.z = mesh->mNormals[i].z;
+    } else {
+      std::println("Mesh does not have normals!");
     }
     // Texture coords
     if (mesh->mTextureCoords[0] != nullptr) {
-      glm::vec2 vec;
-      vec.x = mesh->mTextureCoords[0][i].x;
-      vec.y = mesh->mTextureCoords[0][i].y;
-      vertex.tex_coords = vec;
-    } else {
-      vertex.tex_coords = glm::vec2(0.0F, 0.0F);
+      vertex.tex_coords.x = mesh->mTextureCoords[0][i].x;
+      vertex.tex_coords.y = mesh->mTextureCoords[0][i].y;
     }
     vertices.push_back(vertex);
   }
@@ -92,18 +98,48 @@ Mesh ObjectLoader::_process_mesh(aiMesh *mesh, const aiScene *scene) {
       indices.push_back(face.mIndices[j]);
     }
   }
-  return {vertices, indices, textures};
+  uint32 material_index = mesh->mMaterialIndex;
+  return {vertices, indices, textures, material_index};
 }
 
-void ObjectLoader::_normalize(std::vector<Mesh> &meshes) {
+Material ObjectLoader::_process_material(aiMaterial *material) {
+  aiColor3D ambient(1.0F, 1.0F, 1.0F);
+  aiColor3D diffuse(1.0F, 1.0F, 1.0F);
+  aiColor3D specular(1.0F, 1.0F, 1.0F);
+  aiColor3D reflective(0.0F, 0.0F, 0.0F);  // Not used
+  aiColor3D emissive(0.0F, 0.0F, 0.0F);    // Not used
+  float shininess = 32.0F;
+
+  if (material->Get(AI_MATKEY_COLOR_AMBIENT, ambient) != AI_SUCCESS) {
+    std::println("Failed to get ambient color for material!");
+  }
+  if (material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuse) != AI_SUCCESS) {
+    std::println("Failed to get diffuse color for material!");
+  }
+  if (material->Get(AI_MATKEY_COLOR_SPECULAR, specular) != AI_SUCCESS) {
+    std::println("Failed to get specular color for material!");
+  }
+  if (material->Get(AI_MATKEY_SHININESS, shininess) != AI_SUCCESS) {
+    std::println("Failed to get shininess for material!");
+  } else {
+    assert(shininess >= 0.0F);
+    shininess = std::max(shininess, 1.0F);
+  }
+
+  return Material{glm::vec3(ambient.r, ambient.g, ambient.b),
+                  glm::vec3(diffuse.r, diffuse.g, diffuse.b),
+                  glm::vec3(specular.r, specular.g, specular.b), shininess};
+}
+
+void ObjectLoader::_normalize(std::vector<std::shared_ptr<Mesh>> &meshes) {
   if (meshes.empty()) {
     return;
   }
 
-  glm::vec3 global_min(meshes[0].get_bounding_box().min);
-  glm::vec3 global_max(meshes[0].get_bounding_box().max);
+  glm::vec3 global_min(meshes[0]->get_bounding_box().min);
+  glm::vec3 global_max(meshes[0]->get_bounding_box().max);
   for (uint32 i = 1; i < meshes.size(); ++i) {
-    auto box = meshes[i].get_bounding_box();
+    auto box = meshes[i]->get_bounding_box();
     global_min = glm::min(global_min, box.min);
     global_max = glm::max(global_max, box.max);
   }
@@ -116,7 +152,7 @@ void ObjectLoader::_normalize(std::vector<Mesh> &meshes) {
                 eng::TransformGenerator::translate_3D(-center);
 
   for (auto &mesh : meshes) {
-    mesh.apply_transform(matrix);
+    mesh->apply_transform(matrix);
   }
 }
 }  // namespace eng

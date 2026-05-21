@@ -1,10 +1,12 @@
 #version 330 core
-layout(triangles) in;
-layout(triangle_strip, max_vertices = 3) out;
+// Input
+layout(location = 0) in vec3 a_pos;
+layout(location = 1) in vec3 a_norm;
 
-in vec3 world_pos[];
-in vec3 color[];
-out vec3 frag_color;
+// Matrix
+uniform mat4 u_model;
+uniform mat4 u_view;
+uniform mat4 u_projection;
 
 struct Light {
   vec3 position;
@@ -23,23 +25,23 @@ uniform Material u_material;
 
 uniform vec3 u_eye_pos;
 
+// Output
+out vec3 frag_color;
+
 void main() {
-  vec3 v0 = world_pos[0];
-  vec3 v1 = world_pos[1];
-  vec3 v2 = world_pos[2];
-  vec3 normal = normalize(cross(v1 - v0, v2 - v0));
+  gl_Position = u_projection * u_view * u_model * vec4(a_pos, 1.0);
+  vec3 model_normal = normalize(transpose(inverse(mat3(u_model))) * a_norm);
+  vec3 world_pos = vec3(u_model * vec4(a_pos, 1.0));
 
-  vec3 center = (v0 + v1 + v2) / 3.0;
-
-  vec3 L = normalize(u_light.position - center);
-  vec3 V = normalize(u_eye_pos - center);
-  vec3 R = normalize(reflect(-L, normal));
+  vec3 L = normalize(u_light.position - world_pos);
+  vec3 V = normalize(u_eye_pos - world_pos);
+  vec3 R = normalize(reflect(-L, model_normal));
 
   // Ambient
   vec3 ambient = u_light.ambient * u_material.ambient;
 
   // Diffuse
-  float diff = max(dot(normal, L), 0.0);
+  float diff = max(dot(model_normal, L), 0.0);
   vec3 diffuse = diff * u_light.intensity * u_material.diffuse;
 
   // Specular
@@ -48,10 +50,4 @@ void main() {
 
   vec3 light = ambient + diffuse + specular;
   frag_color = light;
-
-  for (int i = 0; i < 3; ++i) {
-    gl_Position = gl_in[i].gl_Position;
-    EmitVertex();
-  }
-  EndPrimitive();
 }

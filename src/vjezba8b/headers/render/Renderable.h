@@ -4,10 +4,14 @@
 #pragma once
 #include <glad/glad.h>
 
+#include "Global.h"
+
 namespace eng {
+enum class RenderableType : uint8 { MESH, CURVE, AXIS };
 class Renderable {
  public:
   virtual ~Renderable() = default;
+  [[nodiscard]] virtual RenderableType get_type() const = 0;
   virtual void set_draw_mode(GLenum mode) { _draw_mode = mode; }
   virtual void draw() const = 0;
 

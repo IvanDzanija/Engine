@@ -47,8 +47,8 @@ int main(int argc, char *argv[]) {
   eng::input::register_movable(camera);
 
   // Kocka
-  // auto model = eng::ResourceManager::get_model("glava/glava.obj");
-  auto model = eng::ResourceManager::get_model("kocka.obj");
+  auto model = eng::ResourceManager::get_model("glava/glava.obj");
+  //  auto model = eng::ResourceManager::get_model("kocka.obj");
 
   // Kocka 1
   auto obj1 = std::make_shared<eng::Object>(model, kocka1_shader);

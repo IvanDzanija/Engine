@@ -20,7 +20,6 @@ void main() {
   vec3 c = (p0 + p1 + p2) / 3.0;
   vec3 e = normalize(u_eye_pos - c);
 
-  // CCW check
   if (dot(normal, e) > 0.0) {
     // Emit the triangle edges
     gl_Position = u_projection * u_view * gl_in[0].gl_Position;

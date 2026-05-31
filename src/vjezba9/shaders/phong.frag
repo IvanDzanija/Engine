@@ -1,6 +1,5 @@
 #version 330 core
 
-// Primamo podatke iz Vertex Shadera
 in vec3 v_normal;
 in vec3 v_world_pos;
 in vec2 v_tex_coords;

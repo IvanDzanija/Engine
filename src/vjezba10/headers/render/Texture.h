@@ -60,7 +60,7 @@ struct Texture {
   [[nodiscard]] const std::string &get_path() const { return _path; }
 
  private:
-  uint32 _id;
+  GLuint _id;
   std::string _type;
   std::string _path;
 };

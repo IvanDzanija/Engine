@@ -16,9 +16,13 @@ class Renderable {
   virtual ~Renderable() = default;
   [[nodiscard]] virtual RenderableType get_type() const = 0;
   virtual void set_draw_mode(GLenum mode) { _draw_mode = mode; }
-  virtual void draw(std::shared_ptr<Shader> shader) const = 0;
+  virtual void draw(const std::shared_ptr<Shader> &shader) const = 0;
 
+  // ----------------------------------
+  // CONSTRUCTORS
+  // ----------------------------------
   Renderable() = default;
+  // Move constructors
   Renderable(Renderable &&other) noexcept : _vao(other._vao) { other._vao = 0; }
   Renderable &operator=(Renderable &&other) noexcept {
     if (this != &other) {
@@ -27,6 +31,7 @@ class Renderable {
     }
     return *this;
   }
+  // Copy constructors
   Renderable(const Renderable &) = delete;
   Renderable &operator=(const Renderable &) = delete;
 

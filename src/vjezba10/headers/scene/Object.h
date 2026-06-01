@@ -38,9 +38,12 @@ class Object : public Transform {
   // ----------------------------------
   // METHODS
   // ----------------------------------
+  // Probably should have a pointer to the DepthShader but we will pass it like this for
+  // now
+  void render_depth(const std::shared_ptr<Shader> &depth_shader) const;
   void render(const glm::mat4 &projection_matrix, const glm::mat4 &view_matrix,
-              const std::shared_ptr<Light> &light,
-              const std::optional<glm::vec3> &camera_position = std::nullopt) const;
+              const std::optional<glm::vec3> &camera_position = std::nullopt,
+              const std::shared_ptr<Light> &light = nullptr) const;
   void add_renderable(std::shared_ptr<Renderable> renderable);
 
  private:
@@ -51,7 +54,7 @@ class Object : public Transform {
   Axis _local_axis;
 
   glm::vec3 _uniform_color{1.0F, 0.0F, 0.0F};
-  bool _use_uniform_color = true;
+  bool _use_uniform_color = false;
 
   // ----------------------------------
   // PRIVATE METHODS

@@ -46,7 +46,7 @@ class Mesh : public Renderable {
   // ----------------------------------
   // METHODS
   // ----------------------------------
-  void draw(std::shared_ptr<Shader> shader) const override;
+  void draw(const std::shared_ptr<Shader> &shader) const override;
   [[nodiscard]] RenderableType get_type() const override;
   [[nodiscard]] BoundingBox get_bounding_box() const;
 

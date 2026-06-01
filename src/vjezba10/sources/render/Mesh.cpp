@@ -89,12 +89,12 @@ Mesh::~Mesh() {
 // ----------------------------------
 // METHODS
 // ----------------------------------
-void Mesh::draw(std::shared_ptr<Shader> shader) const {
+void Mesh::draw(const std::shared_ptr<Shader> &shader) const {
   size_t diffuse_count = 0;
   size_t specular_count = 0;
   // Texture binding
-  for (size_t i = 0; i < _textures.size(); ++i) {
-    glActiveTexture(GL_TEXTURE0 + i);
+  for (size_t i = 0, t = 1; i < _textures.size(); ++i, ++t) {
+    glActiveTexture(GL_TEXTURE0 + t);  // Texture unit 0 is reserved for shadow map
     std::string number;
     std::string name = _textures[i]->get_type();
     if (name == "diffuse") {
@@ -106,7 +106,7 @@ void Mesh::draw(std::shared_ptr<Shader> shader) const {
 
     std::string uniform_name = "u_material.";
     uniform_name += name + number;
-    shader->set_uniform(uniform_name, static_cast<int>(i));
+    shader->set_uniform(uniform_name, static_cast<int>(t));
     glBindTexture(GL_TEXTURE_2D, _textures[i]->get_id());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

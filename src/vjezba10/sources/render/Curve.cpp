@@ -52,7 +52,7 @@ Curve::~Curve() {
 // ----------------------------------
 // METHODS
 // ----------------------------------
-void Curve::draw(std::shared_ptr<Shader> shader) const {
+void Curve::draw(const std::shared_ptr<Shader> &shader) const {
   glBindVertexArray(_vao);
   glDrawArrays(_draw_mode, 0, _vertices.size());
   glBindVertexArray(0);

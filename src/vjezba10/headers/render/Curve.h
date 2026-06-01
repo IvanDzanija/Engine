@@ -36,7 +36,7 @@ class Curve : public Renderable {
   // ----------------------------------
   // METHODS
   // ----------------------------------
-  void draw(std::shared_ptr<Shader> shader) const override;
+  void draw(const std::shared_ptr<Shader> &shader) const override;
   [[nodiscard]] RenderableType get_type() const override;
   void update_vertices(std::vector<CurveVertex> &&vertices);
 

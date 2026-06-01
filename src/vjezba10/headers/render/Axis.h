@@ -17,7 +17,7 @@ class Axis : public Renderable {
   // ----------------------------------
   // METHODS
   // ----------------------------------
-  void draw(std::shared_ptr<Shader> shader) const override;
+  void draw(const std::shared_ptr<Shader> &shader) const override;
   [[nodiscard]] RenderableType get_type() const override;
 
  private:

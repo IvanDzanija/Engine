@@ -26,6 +26,13 @@ Graphics::Graphics(AppState &state, glm::vec3 clear_color)
   _load_glfw();
   gladLoadGL();
 
+  // Setup the actual engine state
+  glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LESS);
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
+  glfwSwapInterval(0);
+
   // Print OpenGL version
   const GLubyte *version = glGetString(GL_VERSION);
   if (version != nullptr) {

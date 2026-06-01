@@ -8,9 +8,10 @@
 #include "math/BezierBuilder.h"
 #include "render/Curve.h"
 #include "render/Renderer.h"
+#include "util.h"
 
-static int32 width = 500;
-static int32 height = 500;
+static constexpr int32 width = 500;
+static constexpr int32 height = 500;
 eng::AppState app_state(width, height);
 
 int main(int argc, char *argv[]) {
@@ -52,7 +53,7 @@ int main(int argc, char *argv[]) {
 
   // Light
   auto light = std::make_shared<eng::Light>();
-  light->set_position({-1.5F, 0.0F, 1.5F});
+  light->set_position({0.5F, 0.0F, 4.5F});
   renderer.register_light_source(light);
   auto light_model = eng::ResourceManager::get_model("bird", "bird.obj");
   auto light_object = std::make_shared<eng::Object>(light_model, light_shader);
@@ -61,9 +62,13 @@ int main(int argc, char *argv[]) {
   renderer.register_object(light_object);
   // eng::input::register_movable(light);
 
-  // Kocka
+  // Head
   std::shared_ptr<eng::Model> model =
       eng::ResourceManager::get_model("glava", "glava.obj");
+
+  // Wooden crate
+  std::shared_ptr<eng::Model> crate_model =
+      eng::ResourceManager::get_model("crate", "wooden_crate.obj");
 
   // Kocka 1
   auto obj1 = std::make_shared<eng::Object>(model, phong_shader);
@@ -72,16 +77,34 @@ int main(int argc, char *argv[]) {
   // eng::input::register_movable(obj1);
 
   // Kocka 2
-  auto obj2 = std::make_shared<eng::Object>(model, light_shader);
+  auto obj2 = std::make_shared<eng::Object>(model, phong_shader);
   obj2->set_position({1.5F, 0.0F, 0.0F});
   obj2->set_scale({0.5F, 0.5F, 0.5F});
   renderer.register_object(obj2);
 
   // Kocka 3
-  auto obj3 = std::make_shared<eng::Object>(model, gouraud_shader);
+  auto obj3 = std::make_shared<eng::Object>(model, phong_shader);
   obj3->set_scale({0.5F, 0.5F, 0.5F});
   obj3->set_position({0.0F, 0.0F, 0.0F});
   renderer.register_object(obj3);
+
+  float near = -2.0F;
+  float far = -1.0F;
+  float left = -2.5F;
+  float right = 2.F;
+  float top = 1.5F;
+  float bottom = -1.5F;
+  size_t num_crates = 1000;
+  for (size_t i = 0; i < num_crates; ++i) {
+    auto crate = std::make_shared<eng::Object>(crate_model, phong_shader);
+    float x = eng::random_in_range(left, right);
+    float y = eng::random_in_range(bottom, top);
+    float z = eng::random_in_range(near, far);
+    std::cout << z << std::endl;
+    crate->set_position({x, y, z});
+    crate->set_scale({0.1F, 0.1F, 0.1F});
+    renderer.register_object(crate);
+  }
 
   // Bezier builder
   auto bezier_builder = std::make_shared<eng::BezierBuilder>();
@@ -99,19 +122,12 @@ int main(int argc, char *argv[]) {
 
   bezier_object1->add_renderable(control_curve);
   bezier_object1->add_renderable(interp_curve);
-  bezier_object1->use_uniform_color(false);
 
   bezier_object2->add_renderable(approx_curve);
-  bezier_object2->use_uniform_color(false);
 
   renderer.register_object(bezier_object1);
   renderer.register_object(bezier_object2);
 
-  glEnable(GL_DEPTH_TEST);
-  glDepthFunc(GL_LESS);
-  glEnable(GL_CULL_FACE);
-  glCullFace(GL_BACK);
-  glfwSwapInterval(0);
   while (!eng::Graphics::should_close()) {
     auto deltaTime = (float)FPSManagerObject.enforceFPS(false);
     eng::Graphics::start_frame(deltaTime);
@@ -122,7 +138,7 @@ int main(int argc, char *argv[]) {
       approx_curve->update_vertices(bezier_builder->forward_to_gpu());
       interp_curve->update_vertices(bezier_builder->build_full_interpolate());
     }
-    renderer.render();
+    renderer.render(app_state.get_width(), app_state.get_height());
 
     eng::Graphics::end_frame();
   }

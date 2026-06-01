@@ -36,7 +36,7 @@ Axis::~Axis() {
 // ----------------------------------
 // METHODS
 // ----------------------------------
-void Axis::draw(std::shared_ptr<Shader> shader) const {
+void Axis::draw(const std::shared_ptr<Shader> &shader) const {
   glDisable(GL_DEPTH_TEST);
   glBindVertexArray(_vao);
   glDrawArrays(GL_LINES, 0, 6);

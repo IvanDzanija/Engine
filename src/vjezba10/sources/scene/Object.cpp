@@ -51,9 +51,16 @@ Object &Object::operator=(Object &&other) noexcept {
 // ----------------------------------
 // METHODS
 // ----------------------------------
+void Object::render_depth(const std::shared_ptr<Shader> &depth_shader) const {
+  depth_shader->set_uniform("u_model", model_matrix());
+  for (const auto &renderable : _renderables) {
+    renderable->draw(depth_shader);
+  }
+}
+
 void Object::render(const glm::mat4 &projection_matrix, const glm::mat4 &view_matrix,
-                    const std::shared_ptr<Light> &light,
-                    const std::optional<glm::vec3> &camera_position) const {
+                    const std::optional<glm::vec3> &camera_position,
+                    const std::shared_ptr<Light> &light) const {
   if (!_shader) {
     std::cerr << "ERROR: Object cannot be rendered without a shader or renderables."
               << std::endl;
@@ -68,9 +75,18 @@ void Object::render(const glm::mat4 &projection_matrix, const glm::mat4 &view_ma
   }
 
   _shader->use();
+  // Object uniforms
   _shader->set_uniform("u_projection", projection_matrix);
   _shader->set_uniform("u_view", view_matrix);
   _shader->set_uniform("u_model", model_matrix());
+
+  // Light uniforms
+  _shader->set_uniform("u_light_projection", light->projection_matrix());
+  _shader->set_uniform("u_light_view", light->view_matrix());
+
+  // Shadow map
+  _shader->set_uniform("shadow_map", 0);
+
   if (camera_position.has_value()) {
     _shader->set_uniform("u_eye_pos", camera_position.value());
   }
@@ -88,7 +104,7 @@ void Object::render(const glm::mat4 &projection_matrix, const glm::mat4 &view_ma
   _shader->set_uniform("u_light.ambient", light->get_ambient());
 
   for (const auto &renderable : _renderables) {
-    if (_materials.size() > 0 && renderable->get_type() == RenderableType::MESH) {
+    if (!_materials.empty() && renderable->get_type() == RenderableType::MESH) {
       const auto &mesh = static_cast<Mesh *>(renderable.get());
       if (mesh->get_material_index() >= _materials.size()) {
         std::cerr << "ERROR: Mesh material index is out of bounds!" << std::endl;

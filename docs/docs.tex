@@ -1,0 +1,318 @@
+\documentclass[11pt,a4paper]{article}
+
+% --- Encoding & Language ---
+\usepackage[utf8]{inputenc}       % Supports UTF-8 input (accents, special chars)
+\usepackage[T1]{fontenc}          % Modern font encoding for proper hyphenation
+\usepackage[english]{babel}       % Language adaptation (change to your language)
+
+% --- Page Layout & Design ---
+\usepackage[margin=1in]{geometry} % Standard 1-inch margins
+\usepackage{microtype}            % Improves spacing and justification
+\usepackage{parskip}              % Adds space between paragraphs instead of indents
+\usepackage{fancyhdr}             % For custom headers and footers
+\usepackage{graphicx}             % For including images/logos
+
+% --- Hyperlinks & Color ---
+\usepackage[dvipsnames]{xcolor}   % Advanced color support
+\usepackage{hyperref}             % Interactive PDF links and URLs
+\hypersetup{
+    colorlinks=true,
+    linkcolor=MidnightBlue,
+    filecolor=magenta,
+    urlcolor=Cyan,
+    citecolor=PineGreen,
+    pdftitle={Documentation Title},
+    pdfpagemode=FullScreen,
+}
+
+% --- Bibliography & Indexing ---
+% Using biblatex (modern replacement for traditional bibtex)
+\usepackage[backend=biber,style=numeric,sorting=nty]{biblatex}
+\addbibresource{references.bib}   % Points to your bibliography file
+
+\usepackage{makeidx}              % For creating an index at the end
+\makeindex                        % Initializes the index generator
+
+% -- Plugins for code listings (optional) ---
+\usepackage{listings}
+\usepackage{xcolor}
+
+% Define custom colors for code highlighting
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+% Configure the look of your code blocks
+\lstset{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\small,          % Uses monospace font
+    breakatwhitespace=false,
+    breaklines=true,                     % Wrap long lines automatically
+    captionpos=b,                        % Caption at the bottom
+    keepspaces=true,
+    numbers=left,                        % Line numbers on the left
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=4
+}
+
+% --- Header/Footer Setup ---
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\leftmark}
+\fancyhead[R]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% ==============================================================================
+% DOCUMENT METADATA
+% ==============================================================================
+\title{
+    \vspace{2cm}
+    \Huge\bfseries Technical Documentation \\
+    \large\color{gray}Small Graphics Engine
+}
+\author{
+    \textbf{Ivan Džanija} \\
+    \texttt{ivan.dzanija@fer.unizg.hr} \\
+    University of Zagreb, Faculty of Electrical Engineering and Computing
+}
+\date{\today} % Automatically generates today's date, or hardcode it like {June 2026}
+
+% ==============================================================================
+% MAIN DOCUMENT
+% ==============================================================================
+\begin{document}
+
+% --- 1. FRONT PAGE ---
+\begin{titlepage}
+    \clearpage\thispagestyle{empty}
+    \maketitle
+    \vfill
+    \begin{center}
+        % \includegraphics[width=0.3\textwidth]{logo.png}
+        \small Version 1.0
+    \end{center}
+\end{titlepage}
+
+% --- 2. TABLE OF CONTENTS ---
+\newpage
+\tableofcontents
+\newpage
+
+% --- 3. SECTIONS & CONTENT ---
+\section{Introduction}
+This is the technical documentation for the Small Graphics Engine
+project developed for the laboratory exercise in the
+Interactive Computer Graphics course at the University of Zagreb.
+The purpose of this document is to provide
+an overview of the system architecture, design decisions,
+and implementation details.
+
+
+\section{Drawing lines on the screen}
+This section describes the algorithm used for drawing lines
+on the raster display. The default algorithm
+for doing such a task is Bresenham's line algorithm. That is also
+the algorithm implemented here, although only for education purposes,
+later on the line drawing is done using OpenGL's built-in line
+drawing capabilities that fully utilize the GPU's capabilities
+for rasterization.
+Bresenham's line algorithm here is implemented fully on the CPU, with
+manual fragment shading. The screen raster is kept in memory as a 2D
+array of pixels.
+Here is the code snippet for the manual fragmet shading:
+\begin{lstlisting}[language=C++, caption=Manual fragment shading example]
+// Raster is kept as
+
+// Shades a fragment at the given (x, y) coordinates with the specified color.
+int32 Graphics::shade_fragment(int32 x, int32 y, glm::vec3 color) {
+  y = _height - 1 - y;  // Invert y-axis
+  if (x >= 0 && x < _width && y >= 0 && y < _height) {
+    _raster(x, y) = color;
+    // _raster[(y * _width * 3) + (x * 3)] = color.x;
+    // _raster[(y * _width * 3) + (x * 3) + 1] = color.y;
+    // _raster[(y * _width * 3) + (x * 3) + 2] = color.z;
+    return 0;
+  }
+  std::cerr << "ERROR: fragment out of bounds: (" << x << ", " << y << ")" << std::endl;
+  return -1;
+}
+\end{lstlisting}
+While internal representation of the raster is defined as:
+\begin{lstlisting}[language=C++, caption=Raster representation example]
+struct Raster {
+  int32 width{};
+  int32 height{};
+  std::vector<glm::vec3> data;
+};
+\end{lstlisting}
+As for the line drawing algorithm itself more information (such as full
+derivation) can be found
+\href{https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm}{here}.
+The snippet of the line drawing algorithm is as follows:
+\begin{lstlisting}[language=C++, caption=Bresenham's line algorithm example]
+// 0 to 90 degrees
+void bresenham_line_1(eng::Graphics &screen, int32 x0, int32 y0, int32 x1, int32 y1,
+                      const glm::vec3 &color) {
+  const int32 dy = y1 - y0;
+  const int32 dx = x1 - x0;
+  if (dy <= dx) {
+    const int32 change = dy << 1;       // 2 * dy
+    const int32 correction = -dx << 1;  // -2 * dx
+
+    int32 y_curr = y0;
+    int32 y_cal = -dx;
+    for (int32 x_curr = x0; x_curr <= x1; ++x_curr) {
+      screen.shade_fragment(x_curr, y_curr, color);
+      y_cal += change;
+      if (y_cal >= 0) {
+        ++y_curr;
+        y_cal += correction;
+      }
+    }
+  } else {
+    const int32 change = dx << 1;       // 2 * dx
+    const int32 correction = -dy << 1;  // -2 * dx
+
+    int32 x_curr = x0;
+    int32 x_cal = -dy;
+    for (int32 y_curr = y0; y_curr <= y1; ++y_curr) {
+      screen.shade_fragment(x_curr, y_curr, color);
+      x_cal += change;
+      if (x_cal >= 0) {
+        ++x_curr;
+        x_cal += correction;
+      }
+    }
+  }
+}
+\end{lstlisting}
+
+
+
+\section{Drawing and shading polygons}
+In this section we describe the algorithm for drawing
+and shading polygons. To be more precise we are talking about
+convex polygons, as the algorithm for concave polygons is more
+complex and is not implemented here.
+In this section we are still doing the drawing and shading on the CPU,
+with manual fragment shading as this is this educational implementation
+and most of the Graphics API's (such as OpenGL) provide built-in
+functionality for drawing and shading polygons
+that fully utilize the GPU's capabilities.
+First thing we are doing is providing a user with a way to define
+a polygon. When the user presses the left mouse button the application
+records the position of the mouse cursor and adds it to the list of
+polygon vertices. If the vertex just added would form a non-convex
+polygon the user is alerted in the console. The checking is done
+by seeing if all the vertices of the polygon are on the same side
+of the line formed by any two vertices of the polygon. If that is not
+the case then the polygon is not convex.
+Here is the code snippet for checking if a polygon is convex:
+\begin{lstlisting}[language=C++, caption=Convex polygon checking example]
+[[nodiscard]] std::optional<bool> test_convex() const {
+  if (_elements.size() < 3) {
+    return std::nullopt;  // Not enough vertices to determine convexity
+  }
+  uint8 negative = 0;
+  uint8 positive = 0;
+  for (size_t i = 0; i < _elements.size(); ++i) {
+    const auto &curr_edge =
+        _elements[(i + _elements.size() - 1) % _elements.size()].edge;
+    const auto &next_point = _elements[(i + 1) % _elements.size()].point;
+    double dot =
+        (curr_edge.a * next_point.x) + (curr_edge.b * next_point.y) + curr_edge.c;
+    if (dot < 0) {
+      ++negative;
+    }
+    if (dot > 0) {
+      ++positive;
+    }
+  }
+  return (negative == 0 || positive == 0);
+}
+\end{lstlisting}
+The the user finishes defining the polygon by pressing the right mouse
+button the last line between the last vertex and the first vertex
+is drawn. After that the polygon is filled using the scanline
+algorithm. The scanline algorithm works by iterating through
+each scanline (horizontal line) of the raster
+and finding the intersection points between the scanline and the
+left and right edges of the polygon. Specifically for each scanline
+we are looking for the leftmost right edge and the rightmost left edge.
+After that we are filling the pixels between those two edges using the
+Bresenham's line algorithm described in the previous section.
+The code snippet for the scanline algorithm is as follows:
+\begin{lstlisting}[language=C++, caption=Scanline algorithm example]
+void draw_filled(eng::Graphics &screen) {
+  if (_elements.empty()) {
+    // std::cerr << "Polygon has no vertices to draw." << std::endl;
+    return;  // No vertices to draw
+  }
+
+  int32 x_min = _elements[0].point.x;
+  int32 x_max = _elements[0].point.x;
+  int32 y_min = _elements[0].point.y;
+  int32 y_max = _elements[0].point.y;
+  double L;
+  double R;
+
+  for (const auto &element : _elements) {
+    x_min = std::min(x_min, element.point.x);
+    x_max = std::max(x_max, element.point.x);
+    y_min = std::min(y_min, element.point.y);
+    y_max = std::max(y_max, element.point.y);
+  }
+
+  for (int32 y = y_min; y <= y_max; ++y) {
+    L = static_cast<double>(x_max);
+    R = static_cast<double>(x_min);
+    for (const auto &curr : _elements) {
+      if (curr.edge.a == 0) {
+        continue;  // Skip horizontal edges
+      }
+      double x = (-curr.edge.b * y - curr.edge.c) / static_cast<double>(curr.edge.a);
+      if (test_orientation() == PolyOrientation::CLOCKWISE) {
+        if (curr.left) {
+          L = std::min(L, x);
+        } else {
+          R = std::max(R, x);
+        }
+      } else {
+        if (curr.left) {
+          R = std::max(R, x);
+        } else {
+          L = std::min(L, x);
+        }
+      }
+    }
+    eng::draw_line(screen, static_cast<int32>(L + 0.5F), y,
+                   static_cast<int32>(std::round(R + 0.5F)), y);
+  }
+  // Draw starting vertex in red and outline in blue for clarity
+  screen.shade_fragment(_elements[0].point.x, _elements[0].point.y,
+                        glm::vec3(1, 0, 0));
+  draw_outline(screen);
+}
+\end{lstlisting}
+
+
+\subsection{Component Diagram}
+More details go here...
+
+% --- 4. BIBLIOGRAPHY ---
+\newpage
+\printbibliography[heading=bibintoc, title={References}]
+
+% --- 5. INDEX ---
+\newpage
+\printindex
+
+\end{document}

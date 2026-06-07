@@ -302,10 +302,200 @@ void draw_filled(eng::Graphics &screen) {
   draw_outline(screen);
 }
 \end{lstlisting}
+The final thing supported by the application is tesing if the point
+is inside the polygon. This is done by counting the number
+of times a ray from the point intersects the edges of the polygon.
+The user defines a point by pressing the left mouse button while in
+polygon testing mode. If the number of the intersections is odd then
+the point is inside the polygon, otherwise it is outside.
+Example are shown in the picture \ref{fig:point_in_polygon}.
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\textwidth]{figures/point_in_polygon.png}
+    \caption{Example of point-in-polygon testing.
+    The red point is outside the polygon,
+    while the green point is inside.}
+    \label{fig:point_in_polygon}
+\end{figure}
 
 
-\subsection{Component Diagram}
-More details go here...
+\section{Starting with OpenGl}
+Until now we have been doing all the drawing and shading on the CPU,
+with manual fragment shading and just forwarding the final
+raster to the GPU for displaying. However, this is higly inefficient
+and we are now switching to using OpenGL's built-in functionality
+to fully utilize the GPU's capabilities for rasterization.
+In this part we will be defining and operating with OpenGL's
+pipeline.
+In the following picture \ref{fig:basic_coloring}
+you can see the final result of the current stage of the application.
+The top left corner is just the display for the currently selected
+color. While the triangles are drawn using OpenGL's built-in triangle
+primitives. The triangles are colored using the color defined in the
+top left corner and the color is interpolated across the triangle.
+All of this is done using OpenGL's built-in functionality
+and the GPU's capabilities. Only thing we do here is record the position
+of the mouse cursor when the user clicks and update the corresponding
+vertex buffer.
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\textwidth]{figures/basic_coloring.png}
+    \caption{Example of basic triangle coloring using OpenGL's built-in functionality.}
+    \label{fig:basic_coloring}
+\end{figure}
+\\
+OpenGL's features we introduced here are vertex and fragment shaders,
+vertex buffer objects (VBOs), vertex array objects (VAOs)
+and element buffer objects (EBOs).
+Vertex and fragment shaders we used here are the most basic ones
+that just pass the vertex positions and colors to the GPU and let
+the GPU handle the rasterization and interpolation. The VBOs are used
+to store the vertex data (positions and colors) on the GPU,
+while the VAOs are used to store the state of the vertex attributes
+(such as the layout of the vertex data).
+The EBOs are used to store the indices of the vertices when we
+going with indexed approach.\\
+\section{3D Models}
+Following the section where we introduced OpenGL into our application
+we now want to jump from 2D space to 3D space and start
+working on 3D models. First thing we need to do is define a
+good architecture for the rest of the application since we will be
+using this as a base for the rest of the development. The beginning
+idea for the architecture
+is given in the following picture \ref{fig:architecture}.
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{figures/architecture.png}
+    \caption{Architecture of the application.}
+    \label{fig:architecture}
+\end{figure}
+\\
+Although some small changes were made later on we will keep this
+here since for now this was a plan and the mental model.
+After we have the architecture defined we start building the pieces.
+First thing we are doing is defining a way to load 3D models
+from files. We are using the OBJ file format for storing 3D models
+and using external library Assimp for loading the models from files.
+All models are represented by the class Renderable that is just
+an abstract interface for rendering something on the screen. In this
+section we are focusing on loading models and for that we introduce
+another class Mesh that is responsible for storing the vertex data
+(positions, normals, texture
+coordinates) and the indices of the vertices.
+The Renderable class has a method draw() that is
+responsible for rendering the model on the screen.
+Other pieces we introduce here are Object class and Renderer class.
+We will start with the Object class and it is responsible for
+storing the shader and all the meshes that make up the model.
+The Renderer class is responsible for rendering all the objects
+on the screen and it keeps track of all the objects in the scene with
+methods for adding and removing objects from the scene.
+The final things we introduce are the ResourceManager class and
+the ObjectLoader class. The ResourceManager is the owner off
+all the objects and resources in the application and it caches
+everything inside appropriate data structures like
+\texttt{std::unordered\_map} for easy access. When some resource is
+needed somewhere in the application it is requested from the
+ResourceManager. From there there are two options, either
+the resource is already cached and we return a \texttt{std::shared\_ptr}
+to the resource or the resource is not cached then we use the other
+mentioned class ObjectLoader that is just a clean facade pattern
+for using the Assimp library for loading the models from files.
+After the model is loaded it is first normalized on the screen
+and then cached in the ResourceManager. After the model is loaded
+and cached then we return a \texttt{std::shared\_ptr} to
+the model and it is used in the application.
+
+\section{Math and transformations}
+This is probably the hardest part of the application when doing
+manually. In this section we introduce the math library GLM,
+classes like Transform and TransformGenerator and the concept of
+camera. We will start with the Transform class. The idea
+of the Transform class is to provide a clean interface for
+everything that will be in the scene and needs to track its position,
+rotation and scale. The Transform class is abstract class from which
+Camera and Object classes inherit. Transform class iternally keeps
+track of the position, local axes and scale of the object. It provides
+methods for rotating, moving and scaling the object in the scene.
+These methods all just internally update the position, local axes
+and scale. This movement is then reprensented as a transformation
+matrix that the application fetches with method
+\texttt{get\_model\_matrix()} and sends the model matrix to the shader
+for rendering.
+Another class we introduce is the TransformGenerator class. This
+class is just a clean facade pattern for generating transformation
+matrices using the GLM library.
+The final thing introduced here is the concept of camera encapsulated
+in the Camera class. The Camera class inherits from the Transform class
+and only thing it is reponsible for is generating the view and
+projection matrices. The view matrix is generate using
+\texttt{glm::lookAt()} function from the GLM library
+and the projection matrix is generated using \texttt{glm::frustrum()}
+function from the GLM library (rather the abstracted versions inside
+the TransformGenerator class).
+With all this we finally arrive at the shaders. Fragment shader
+has stayed the same and we are not making changes now. The vertex shader
+has a small change. Now we are sending the model, view and
+projection matrices to the vertex shader and then all the transformations
+are done in the vertex shader (meaning on the GPU). The vertex shader
+looks as follows:
+\begin{lstlisting}[language=C, caption=Vertex shader example]
+#version 330 core
+// Input
+layout (location = 0) in vec3 aPos;
+layout (location = 1) in vec3 aCol;
+
+// Matrix
+uniform mat4 u_model;
+uniform mat4 u_view;
+uniform mat4 u_projection;
+
+// Color
+uniform vec3 u_color;
+
+// Output
+out vec3 color;
+
+void main() {
+  color = aCol;
+  gl_Position = u_projection * u_view * u_model * vec4(aPos, 1.0);
+}
+\end{lstlisting}
+After all this we finally have a working application that can load
+3D models from files, render them and move around the scene.
+The preview of the application at this stage is shown in the following
+picture \ref{fig:3d_preview}. In the picture we can also see the
+local axes of the models and global axes of the scene.
+\begin{figure}[ht]
+    \centering
+    \includegraphics[width=0.5\textwidth]{figures/3d_preview.png}
+    \caption{Preview of the application at the stage of 3D model loading and rendering.}
+    \label{fig:3d_preview}
+\end{figure}
+
+\section{Back-face culling}
+This is a small optimization technique that we can implement to improve
+the performance of our application. The idea is to not render any
+faces of the model that are facing away from the camera. This can be
+done a lot of different ways. We are have tried two approaches for
+educational purposes. Both approaches are done inside the geometry
+shader. The first approach is done in the scene coordinate system
+where we calculate the the \textit{centroid} of the triangle and then
+calculate the normal of the triangle. After that we calculate the vector
+from the camera to the centroid and then we calculate the dot product
+between the normal and the vector from the camera to the centroid.
+The dot product gives us the angle between the normal and the vector
+from the camera to the centroid. If the angle is greater than 90
+degrees then the face is facing away from the
+camera and we can discard it.
+
+
+
+
+
+
+
+
 
 % --- 4. BIBLIOGRAPHY ---
 \newpage

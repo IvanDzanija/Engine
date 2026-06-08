@@ -52,7 +52,7 @@ int main(int argc, char *argv[]) {
 
   // Light
   auto light = std::make_shared<eng::Light>();
-  light->set_position({-1.5F, 0.0F, -1.5F});
+  light->set_position({-1.5F, 0.0F, 1.5F});
   renderer.register_light_source(light);
   auto light_model = eng::ResourceManager::get_model("bird", "bird.obj");
   auto light_object = std::make_shared<eng::Object>(light_model, light_shader);

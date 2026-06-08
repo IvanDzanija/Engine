@@ -53,7 +53,7 @@ int main(int argc, char *argv[]) {
 
   // Light
   auto light = std::make_shared<eng::Light>();
-  light->set_position({0.5F, 0.0F, 4.5F});
+  light->set_position({-0.5F, 0.0F, 4.5F});
   renderer.register_light_source(light);
   auto light_model = eng::ResourceManager::get_model("bird", "bird.obj");
   auto light_object = std::make_shared<eng::Object>(light_model, light_shader);
@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
 
   // Kocka 2
   auto obj2 = std::make_shared<eng::Object>(model, phong_shader);
-  obj2->set_position({1.5F, 0.0F, 0.0F});
+  obj2->set_position({-1.5F, 0.0F, 1.5F});
   obj2->set_scale({0.5F, 0.5F, 0.5F});
   renderer.register_object(obj2);
 

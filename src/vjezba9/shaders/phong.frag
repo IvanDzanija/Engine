@@ -33,7 +33,8 @@ void main() {
   vec3 R = normalize(reflect(-L, normal));
 
   vec3 tex_diffuse = texture(u_material.diffuse1, v_tex_coords).rgb;
-  vec3 tex_specular = texture(u_material.specular1, v_tex_coords).rgb;
+  // vec3 tex_specular = texture(u_material.specular1, v_tex_coords).rgb;
+  vec3 tex_specular = vec3(1.0);
 
   vec3 final_ambient_color = tex_diffuse * u_material.ambient;
   vec3 final_diffuse_color = tex_diffuse * u_material.diffuse;

@@ -99,17 +99,13 @@ void Mesh::draw(std::shared_ptr<Shader> shader) const {
     std::string name = _textures[i]->get_type();
     if (name == "diffuse") {
       number = std::to_string(++diffuse_count);
-
     } else if (name == "specular") {
       number = std::to_string(++specular_count);
     }
-
     std::string uniform_name = "u_material.";
     uniform_name += name + number;
     shader->set_uniform(uniform_name, static_cast<int>(i));
     glBindTexture(GL_TEXTURE_2D, _textures[i]->get_id());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   }
   glActiveTexture(GL_TEXTURE0);
 

@@ -108,8 +108,6 @@ void Mesh::draw(const std::shared_ptr<Shader> &shader) const {
     uniform_name += name + number;
     shader->set_uniform(uniform_name, static_cast<int>(t));
     glBindTexture(GL_TEXTURE_2D, _textures[i]->get_id());
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   }
   glActiveTexture(GL_TEXTURE0);
 

@@ -1,7 +1,7 @@
 # Engine
 
 This repository contains laboratory exercises and supporting code for the FER
-**Interatactive Computer Graphics** course.
+**Interactive Computer Graphics** course.
 
 ## Description
 
